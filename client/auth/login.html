@@ -7,31 +7,25 @@
 </head>
 <body>
   <h1>College Buddy</h1>
-  <h2>Contact Form</h2>
-  <form id="contact-form" method="post" action="#">
-    <div>
-      <label for="fullName">Full Name</label><br />
-      <input type="text" id="fullName" name="fullName" required />
-      <span id="fullName-error" class="error-message"></span>
-    </div>
+  <h2>Login</h2>
+  <form id="login-form" method="post" action="#">
     <div>
       <label for="email">Email</label><br />
       <input type="email" id="email" name="email" required />
       <span id="email-error" class="error-message"></span>
     </div>
     <div>
-      <label for="course">Course</label><br />
-      <input type="text" id="course" name="course" />
-      <span id="course-error" class="error-message"></span>
+      <label for="password">Password</label><br />
+      <input type="password" id="password" name="password" required />
+      <span id="password-error" class="error-message"></span>
     </div>
     <div>
-      <label for="message">Message</label><br />
-      <textarea id="message" name="message" rows="5"></textarea>
-      <span id="message-error" class="error-message"></span>
-    </div>
-    <div>
-      <button type="submit">Submit</button>
+      <button type="submit">Login</button>
     </div>
   </form>
+  <script src="/js/auth.js"></script>
+  <script>
+    document.getElementById('login-form').addEventListener('submit', submitLogin);
+  </script>
 </body>
 </html>

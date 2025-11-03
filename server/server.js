@@ -9,7 +9,8 @@ const indexRoutes = require("./routes/index");
 const authRoutes = require("./routes/auth");
 
 // Middleware
-app.use(express.static(path.join(__dirname, "..", "public")));
+app.use(express.json()); // Parse JSON bodies
+app.use(express.static(path.join(__dirname, "..", "client")));
 
 // Routes
 app.use("/", indexRoutes);
