@@ -1,0 +1,18 @@
+.error-banner {
+  display: none;
+  background-color: #ff4444;
+  color: white;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.error-banner.show {
+  display: block;
+}
+
+.error-message {
+  color: #ff4444;
+}
+

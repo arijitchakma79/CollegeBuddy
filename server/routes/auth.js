@@ -90,12 +90,47 @@ router.post('/login', async (req, res) => {
     return res.json({
       success: true,
       message: 'Login successful',
-      user: data.user
+      user: data.user,
+      session: data.session
     });
   } catch (err) {
     return res.status(500).json({
       success: false,
       message: 'An error occurred during login',
+      error: err.message
+    });
+  }
+});
+
+router.get('/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'No authentication token provided'
+      });
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: user
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching user',
       error: err.message
     });
   }

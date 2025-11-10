@@ -3,14 +3,14 @@ function showError(message) {
   const errorMessage = document.getElementById('error-message');
   if (errorBanner && errorMessage) {
     errorMessage.textContent = message;
-    errorBanner.style.display = 'block';
+    errorBanner.classList.add('show');
   }
 }
 
 function hideError() {
   const errorBanner = document.getElementById('error-banner');
   if (errorBanner) {
-    errorBanner.style.display = 'none';
+    errorBanner.classList.remove('show');
   }
 }
 
@@ -54,7 +54,6 @@ async function submitLogin(event) {
           const errorSpan = document.getElementById(`${field}-error`);
           if (errorSpan) {
             errorSpan.textContent = data.errors[field];
-            errorSpan.style.color = '#ff4444';
           }
         });
       }
@@ -62,7 +61,12 @@ async function submitLogin(event) {
     } else {
       hideError();
       console.log('Login successful:', data);
-      window.location.href = '/';
+      
+      if (data.session && data.session.access_token) {
+        localStorage.setItem('authToken', data.session.access_token);
+      }
+      
+      window.location.href = '/protected/dashboard';
     }
   } catch (error) {
     console.error('Login error:', error);
@@ -114,7 +118,6 @@ async function submitRegister(event) {
           const errorSpan = document.getElementById(`${field}-error`);
           if (errorSpan) {
             errorSpan.textContent = data.errors[field];
-            errorSpan.style.color = '#ff4444';
           }
         });
       }
