@@ -1,6 +1,10 @@
 const express = require("express");
 const path = require("path");
 const router = express.Router();
+const supabase = require("../services/supabaseClient");
+const { validateRegistration, validateLogin } = require("../utils/validate");
+
+
 
 router.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'client', 'auth', 'login.html'));
@@ -11,33 +15,90 @@ router.get('/register', (req, res) => {
 });
 
 // POST routes for handling form submissions
-router.post('/login', (req, res) => {
-  console.log('=== LOGIN SUBMISSION ===');
-  console.log('Email:', req.body.email);
-  console.log('Password:', req.body.password);
-  console.log('Full request body:', req.body);
-  console.log('=======================');
+router.post('/register', async (req, res) => {
+  const validation = validateRegistration(req.body);
   
-  res.json({ 
-    success: true, 
-    message: 'Login info received (check server console)' 
-  });
+  if (!validation.isValid) {
+    return res.status(400).json({
+      success: false,
+      errors: validation.errors
+    });
+  }
+
+  const { email, password, fullName, username } = req.body;
+  
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          username: username,
+          fullName: fullName
+        }
+      }
+    });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: 'Registration failed',
+        error: error.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Registration successful',
+      user: data.user
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred during registration',
+      error: err.message
+    });
+  }
 });
 
-router.post('/register', (req, res) => {
-  console.log('=== REGISTER SUBMISSION ===');
-  console.log('Full Name:', req.body.fullName);
-  console.log('Username:', req.body.username);
-  console.log('Email:', req.body.email);
-  console.log('Password:', req.body.password);
-  console.log('Confirm Password:', req.body.confirmPassword);
-  console.log('Full request body:', req.body);
-  console.log('===========================');
+router.post('/login', async (req, res) => {
+  const validation = validateLogin(req.body);
   
-  res.json({ 
-    success: true, 
-    message: 'Registration info received (check server console)' 
-  });
+  if (!validation.isValid) {
+    return res.status(400).json({
+      success: false,
+      errors: validation.errors
+    });
+  }
+
+  const { email, password } = req.body;
+  
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password',
+        error: error.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Login successful',
+      user: data.user
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred during login',
+      error: err.message
+    });
+  }
 });
 
 module.exports = router;
