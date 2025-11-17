@@ -7,22 +7,50 @@
   <link rel="stylesheet" href="/css/dashboard.css" />
 </head>
 <body>
-  <div class="header">
-    <div class="user-info">
-      <div class="user-details">
-        <h1>College Buddy</h1>
-      </div>
-      <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
-  </div>
-
   <div id="error-banner" class="error-message hidden">
     <span id="error-message"></span>
   </div>
 
-  <div class="dashboard-content">
-    <h2>Dashboard</h2>
-    <p>Welcome to your dashboard</p>
+  <div class="dashboard-container">
+    <div class="sidebar-nav">
+      <div class="sidebar-header">
+        <h1>College Buddy</h1>
+      </div>
+      <nav class="vertical-nav">
+        <button class="nav-item active" data-tab="profile">
+          <span class="nav-icon">👤</span>
+          <span class="nav-text">Profile</span>
+        </button>
+        <button class="nav-item" data-tab="events">
+          <span class="nav-icon">📅</span>
+          <span class="nav-text">Events</span>
+        </button>
+        <button class="nav-item" data-tab="organizations">
+          <span class="nav-icon">🏢</span>
+          <span class="nav-text">Organizations</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+      <div id="profile-tab" class="tab-content active">
+        <h2>Profile</h2>
+        <p>Your profile information will appear here.</p>
+      </div>
+
+      <div id="events-tab" class="tab-content">
+        <h2>Events</h2>
+        <p>Your events will appear here.</p>
+      </div>
+
+      <div id="organizations-tab" class="tab-content">
+        <h2>Organizations</h2>
+        <p>Your organizations will appear here.</p>
+      </div>
+    </div>
   </div>
 
   <script src="/js/error.js"></script>

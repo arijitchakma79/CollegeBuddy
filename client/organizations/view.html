@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organization - College Buddy</title>
+  <link rel="stylesheet" href="/css/organization.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <h1><a href="/">College Buddy</a></h1>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/auth/login">Login</a>
+      </nav>
+    </div>
+  </div>
+
+  <div id="error-banner" class="error-message hidden">
+    <span id="error-message"></span>
+  </div>
+
+  <div class="container">
+    <div id="loading" class="loading">
+      <p>Loading organization...</p>
+    </div>
+
+    <div id="organization-content" class="organization-content hidden">
+      <div class="organization-header">
+        <h2 id="org-name"></h2>
+        <div class="org-id">ID: <span id="org-id"></span></div>
+      </div>
+
+      <div class="organization-details">
+        <div class="detail-section">
+          <h3>Description</h3>
+          <p id="org-description" class="description"></p>
+        </div>
+
+        <div class="detail-section">
+          <h3>Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Created:</span>
+              <span id="org-created" class="info-value"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Organization ID:</span>
+              <span id="org-id-value" class="info-value"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="not-found" class="not-found hidden">
+      <h2>Organization Not Found</h2>
+      <p>The organization you're looking for doesn't exist or has been removed.</p>
+      <a href="/" class="btn-primary">Go Home</a>
+    </div>
+  </div>
+
+  <script src="/js/error.js"></script>
+  <script src="/js/organization.js"></script>
+</body>
+</html>
+
