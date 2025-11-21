@@ -1,18 +1,101 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #F5F7FA;
+  font-family: "Inter", sans-serif;
+  color: #07294D;
+}
+
+.center-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.card {
+  background: white;
+  padding: 35px 45px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  width: 350px;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #07294D;
+}
+
+.subtitle {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 14px;
+  color: #555;
+}
+
+label {
+  font-weight: 600;
+  margin-top: 10px;
+  display: block;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  text-align: center;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: white;
+}
+
+.blue-btn {
+  background: #07294D;
+}
+
+.blue-btn:hover {
+  background: #0a3b6a;
+}
+
+.gold-btn {
+  background: #FFD100;
+  color: black;
+}
+
+.gold-btn:hover {
+  background: #e1b800;
+}
+
+.switch-text {
+  text-align: center;
+  margin-top: 10px;
+}
+
 .error-banner {
   display: none;
   background-color: #ff4444;
   color: white;
   padding: 12px;
   margin-bottom: 20px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-weight: bold;
 }
 
 .error-banner.show {
   display: block;
 }
-
-.error-message {
-  color: #ff4444;
-}
-

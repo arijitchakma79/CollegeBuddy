@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-=======
-//login function
->>>>>>> Stashed changes
 async function submitLogin(event) {
   event.preventDefault();
   hideError();
@@ -55,10 +51,6 @@ async function submitLogin(event) {
   }
 }
 
-<<<<<<< Updated upstream
-=======
-//register function
->>>>>>> Stashed changes
 async function submitRegister(event) {
   event.preventDefault();
   hideError();
@@ -117,4 +109,3 @@ async function submitRegister(event) {
     showError('An error occurred. Please try again.');
   }
 }
-
