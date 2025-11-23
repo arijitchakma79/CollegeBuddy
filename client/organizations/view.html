@@ -22,42 +22,61 @@
   </div>
 
   <div class="container">
-    <div id="loading" class="loading">
-      <p>Loading organization...</p>
+    <div class="organizations-header">
+      <h2>Organizations</h2>
+      <button id="create-org-btn" class="btn-primary">Create Org</button>
     </div>
 
-    <div id="organization-content" class="organization-content hidden">
-      <div class="organization-header">
-        <h2 id="org-name"></h2>
-        <div class="org-id">ID: <span id="org-id"></span></div>
-      </div>
+    <div id="loading" class="loading">
+      <p>Loading organizations...</p>
+    </div>
 
-      <div class="organization-details">
-        <div class="detail-section">
-          <h3>Description</h3>
-          <p id="org-description" class="description"></p>
-        </div>
-
-        <div class="detail-section">
-          <h3>Information</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">Created:</span>
-              <span id="org-created" class="info-value"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Organization ID:</span>
-              <span id="org-id-value" class="info-value"></span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div id="organizations-list" class="organizations-list hidden">
+      <!-- Organizations will be dynamically inserted here -->
     </div>
 
     <div id="not-found" class="not-found hidden">
-      <h2>Organization Not Found</h2>
-      <p>The organization you're looking for doesn't exist or has been removed.</p>
-      <a href="/" class="btn-primary">Go Home</a>
+      <h2>No Organizations Found</h2>
+      <p>There are no organizations available yet.</p>
+    </div>
+  </div>
+
+  <!-- Modal for creating organization -->
+  <div id="create-org-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create New Organization</h2>
+        <button class="modal-close" id="close-modal">&times;</button>
+      </div>
+      <form id="create-org-form">
+        <div class="form-group">
+          <label for="org-name">Organization Name *</label>
+          <input 
+            type="text" 
+            id="org-name" 
+            name="name" 
+            required 
+            placeholder="Enter organization name"
+          />
+          <span id="name-error" class="field-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="org-description">Description</label>
+          <textarea 
+            id="org-description" 
+            name="description" 
+            rows="5" 
+            placeholder="Enter organization description (optional)"
+          ></textarea>
+          <span id="description-error" class="field-error"></span>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Create Organization</button>
+          <button type="button" class="btn-secondary" id="cancel-create">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
