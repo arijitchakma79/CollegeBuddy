@@ -3,7 +3,6 @@ const router = express.Router();
 const supabase = require("../services/supabaseClient");
 const { validateRegistration, validateLogin } = require("../utils/validate");
 
-// POST /api/auth/register - Handle user registration
 router.post('/register', async (req, res) => {
   const validation = validateRegistration(req.body);
   
@@ -14,16 +13,16 @@ router.post('/register', async (req, res) => {
     });
   }
 
-  const { email, password, fullName, username } = req.body;
-  
+  const { email, password, fullName, username, confirmPassword } = req.body;
+
   try {
     const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
+      email,
+      password,
       options: {
         data: {
-          username: username,
-          fullName: fullName
+          fullName,
+          username
         }
       }
     });
@@ -31,26 +30,26 @@ router.post('/register', async (req, res) => {
     if (error) {
       return res.status(400).json({
         success: false,
-        message: 'Registration failed',
+        message: "Registration failed",
         error: error.message
       });
     }
 
     return res.json({
       success: true,
-      message: 'Registration successful',
+      message: "Registration successful",
       user: data.user
     });
+
   } catch (err) {
     return res.status(500).json({
       success: false,
-      message: 'An error occurred during registration',
+      message: "An error occurred during registration",
       error: err.message
     });
   }
 });
 
-// POST /api/auth/login - Handle user login
 router.post('/login', async (req, res) => {
   const validation = validateLogin(req.body);
   
@@ -62,70 +61,73 @@ router.post('/login', async (req, res) => {
   }
 
   const { email, password } = req.body;
-  
+
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password
+      email,
+      password
     });
 
     if (error) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: "Invalid email or password",
         error: error.message
       });
     }
 
     return res.json({
       success: true,
-      message: 'Login successful',
+      message: "Login successful",
       user: data.user,
       session: data.session
     });
+
   } catch (err) {
     return res.status(500).json({
       success: false,
-      message: 'An error occurred during login',
+      message: "An error occurred during login",
       error: err.message
     });
   }
 });
 
-// GET /api/auth/me - Get current authenticated user
 router.get('/me', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: 'No authentication token provided'
+        message: "No authentication token provided"
       });
     }
 
-    const token = authHeader.split('Bearer ')[1];
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const token = authHeader.split(" ")[1];  // correct token extraction
 
-    if (error || !user) {
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data?.user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid or expired token'
+        message: "Invalid or expired token",
+        error: error?.message
       });
     }
 
     return res.json({
       success: true,
-      user: user
+      user: data.user
     });
+
   } catch (err) {
     return res.status(500).json({
       success: false,
-      message: 'Error fetching user',
+      message: "Error fetching user",
       error: err.message
     });
   }
 });
 
-module.exports = router;
 
+module.exports = router;

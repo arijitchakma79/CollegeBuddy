@@ -43,7 +43,7 @@ async function submitLogin(event) {
         localStorage.setItem('authToken', data.session.access_token);
       }
       
-      window.location.href = '/protected/dashboard';
+      window.location.href = '/protected/dashboard.html';
     }
   } catch (error) {
     console.error('Login error:', error);
@@ -79,15 +79,18 @@ async function submitRegister(event) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        fullName: fullName,
-        username: username,
-        email: email,
-        password: password,
-        confirmPassword: confirmPassword
+        fullName,
+        username,
+        email,
+        password,
+        confirmPassword
       })
     });
     
     const data = await response.json();
+    console.log("REGISTER RESPONSE:", data);
+    console.log("VALIDATION ERRORS:", data.errors);
+
     
     if (!response.ok) {
       if (data.errors) {

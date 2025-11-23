@@ -2,57 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f6f9fc;
-      color: #333;
-      margin: 0;
-      padding: 0;
-    }
-    .dashboard {
-      max-width: 600px;
-      margin: 80px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    h1 { color: #1d3557; }
-    button {
-      background: #457b9d;
-      color: #fff;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    button:hover { background: #1d3557; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | College Buddy</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
 </head>
+
 <body>
-  <div class="dashboard">
-    <h1>Welcome to CollegeBuddy</h1>
-    <p id="userInfo"></p>
-    <button id="logoutBtn">Log Out</button>
-  </div>
 
-  <script>
-    const user = JSON.parse(localStorage.getItem('user'));
-    const userInfo = document.getElementById('userInfo');
-    if (user) {
-      userInfo.textContent = `You are logged in as ${user.email || user.username || 'User'}`;
-    } else {
-      window.location.href = '/login.html';
-    }
+  <nav class="sidebar">
+    <h2>College Buddy</h2>
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      localStorage.removeItem('user');
-      window.location.href = '/login.html';
-    });
-  </script>
+    <ul>
+      <li class="nav-item active" data-tab="profile">Profile</li>
+      <li class="nav-item" data-tab="organizations">Organizations</li>
+      <li class="nav-item" data-tab="events">Events</li>
+      <li class="nav-item" onclick="logout()">Logout</li>
+    </ul>
+  </nav>
+
+  <main class="content">
+
+    <section id="profile-tab" class="tab-content active">
+      <h1>Your Profile</h1>
+
+      <div class="profile-card">
+        <p><strong>Name:</strong> <span id="profile-name"></span></p>
+        <p><strong>Username:</strong> <span id="profile-username"></span></p>
+        <p><strong>Email:</strong> <span id="profile-email"></span></p>
+      </div>
+    </section>
+
+    <section id="organizations-tab" class="tab-content">
+      <h1>Your Organizations</h1>
+      <p>Organization content will go here...</p>
+    </section>
+
+    <section id="events-tab" class="tab-content">
+      <h1>Events</h1>
+      <p>Events will go here…</p>
+    </section>
+
+  </main>
+
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>

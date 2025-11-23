@@ -3,8 +3,7 @@ function logout() {
     window.location.href = '/auth/login';
 }
 
-// Tab switching functionality
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const navItems = document.querySelectorAll('.nav-item');
     const tabContents = document.querySelectorAll('.tab-content');
 
@@ -12,20 +11,43 @@ document.addEventListener('DOMContentLoaded', function() {
         item.addEventListener('click', function() {
             const targetTab = this.getAttribute('data-tab');
 
-            // Remove active class from all nav items
             navItems.forEach(nav => nav.classList.remove('active'));
-            
-            // Add active class to clicked nav item
             this.classList.add('active');
 
-            // Hide all tab contents
             tabContents.forEach(tab => tab.classList.remove('active'));
-
-            // Show selected tab content
-            const selectedTab = document.getElementById(`${targetTab}-tab`);
-            if (selectedTab) {
-                selectedTab.classList.add('active');
-            }
+            document.getElementById(`${targetTab}-tab`).classList.add('active');
         });
     });
+
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+        window.location.href = "/auth/login";
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/auth/me', {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            window.location.href = "/auth/login";
+            return;
+        }
+
+        const user = result.user;
+
+        document.getElementById('profile-name').textContent = user.user_metadata.fullName;
+        document.getElementById('profile-username').textContent = user.user_metadata.username;
+        document.getElementById('profile-email').textContent = user.email;
+
+    } catch (error) {
+        console.error("Failed to load profile:", error);
+        window.location.href = "/auth/login";
+    }
 });

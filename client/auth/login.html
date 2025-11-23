@@ -6,29 +6,40 @@
   <title>Login | College Buddy</title>
   <link rel="stylesheet" href="/css/auth.css" />
 </head>
+
 <body class="center-page">
+
   <div class="card">
     <h1 class="title">College Buddy</h1>
     <h2 class="subtitle">Login</h2>
+
     <div id="error-banner" class="error-banner">
       <span id="error-message"></span>
     </div>
+
     <form id="login-form" method="post">
       <label for="email">Email</label>
       <input type="email" id="email" name="email" required />
+
       <label for="password">Password</label>
       <input type="password" id="password" name="password" required />
+
       <button type="submit" class="btn blue-btn">Login</button>
     </form>
+
     <p class="switch-text">
       Don't have an account?
       <a href="/auth/register">Register here</a>
     </p>
+
   </div>
+
   <script src="/js/error.js"></script>
   <script src="/js/auth.js"></script>
+
   <script>
     document.getElementById("login-form").addEventListener("submit", submitLogin);
   </script>
+
 </body>
 </html>
