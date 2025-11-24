@@ -18,7 +18,7 @@ async function checkExistingAuth() {
     
     if (result.success && result.user) {
       // Token is valid, redirect to dashboard
-      window.location.href = '/protected/dashboard';
+      window.location.href = '/protected/home';
     } else {
       // Token is invalid, remove it and show login form
       localStorage.removeItem('authToken');
@@ -95,7 +95,7 @@ async function submitLogin(event) {
         console.error('No session object in response!');
       }
       
-      window.location.href = '/protected/dashboard';
+      window.location.href = '/protected/home';
     }
   } catch (error) {
     console.error('Login error:', error);

@@ -17,19 +17,16 @@ async function logout() {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
+    // Highlight active nav item based on current page
+    const currentPath = window.location.pathname;
     const navItems = document.querySelectorAll('.nav-item');
-    const tabContents = document.querySelectorAll('.tab-content');
-
+    
     navItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const targetTab = this.getAttribute('data-tab');
-
-            navItems.forEach(nav => nav.classList.remove('active'));
-            this.classList.add('active');
-
-            tabContents.forEach(tab => tab.classList.remove('active'));
-            document.getElementById(`${targetTab}-tab`).classList.add('active');
-        });
+        if (item.getAttribute('href') === currentPath) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
     });
 
     const token = localStorage.getItem('authToken');
@@ -59,17 +56,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
-        // Token is valid, load user data
+        // Token is valid, load user data (only on profile page)
         const user = result.user;
         
-        if (document.getElementById('profile-name')) {
-            document.getElementById('profile-name').textContent = user.user_metadata?.fullName || 'N/A';
-        }
-        if (document.getElementById('profile-username')) {
-            document.getElementById('profile-username').textContent = user.user_metadata?.username || 'N/A';
-        }
-        if (document.getElementById('profile-email')) {
-            document.getElementById('profile-email').textContent = user.email || 'N/A';
+        // Only load profile data if we're on the profile page
+        if (window.location.pathname.includes('/profile')) {
+            if (document.getElementById('profile-name')) {
+                document.getElementById('profile-name').textContent = user.user_metadata?.fullName || 'N/A';
+            }
+            if (document.getElementById('profile-username')) {
+                document.getElementById('profile-username').textContent = user.user_metadata?.username || 'N/A';
+            }
+            if (document.getElementById('profile-email')) {
+                document.getElementById('profile-email').textContent = user.email || 'N/A';
+            }
         }
     } catch (error) {
         console.error("Failed to load profile:", error);
