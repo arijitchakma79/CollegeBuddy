@@ -56,20 +56,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
-        // Token is valid, load user data (only on profile page)
+        // Token is valid, load user data
         const user = result.user;
         
-        // Only load profile data if we're on the profile page
-        if (window.location.pathname.includes('/profile')) {
-            if (document.getElementById('profile-name')) {
-                document.getElementById('profile-name').textContent = user.user_metadata?.fullName || 'N/A';
-            }
-            if (document.getElementById('profile-username')) {
-                document.getElementById('profile-username').textContent = user.user_metadata?.username || 'N/A';
-            }
-            if (document.getElementById('profile-email')) {
-                document.getElementById('profile-email').textContent = user.email || 'N/A';
-            }
+        // Update navbar username on all pages
+        const navbarUsername = document.getElementById('navbar-username');
+        if (navbarUsername) {
+            navbarUsername.textContent = user.user_metadata?.username || user.user_metadata?.fullName || 'User';
         }
     } catch (error) {
         console.error("Failed to load profile:", error);
