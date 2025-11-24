@@ -78,6 +78,15 @@ function hideError() {
 
 // Fetch all organizations
 async function loadOrganizations() {
+    // Show loading state
+    const loading = document.getElementById('loading');
+    const organizationsList = document.getElementById('organizations-list');
+    const notFound = document.getElementById('not-found');
+    
+    if (loading) loading.classList.remove('hidden');
+    if (organizationsList) organizationsList.classList.add('hidden');
+    if (notFound) notFound.classList.add('hidden');
+    
     try {
         const response = await fetch('/api/organizations');
         const data = await response.json();

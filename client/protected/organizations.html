@@ -38,14 +38,54 @@
 
     <div class="dashboard-content">
       <div class="page-content">
-        <h2>Organizations</h2>
-        <p>Your organizations will appear here.</p>
+        <div class="organizations-header">
+          <h2>Organizations</h2>
+          <button id="create-org-btn" class="create-org-btn">Create Organization</button>
+        </div>
+        
+        <div id="loading" class="loading">Loading organizations...</div>
+        
+        <div id="organizations-list" class="organizations-list hidden"></div>
+        
+        <div id="not-found" class="not-found hidden">
+          <p>No organizations found. Create your first organization to get started!</p>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Create Organization Modal -->
+  <div id="create-org-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create New Organization</h3>
+        <button id="close-modal" class="close-btn">&times;</button>
+      </div>
+      <form id="create-org-form" class="modal-form">
+        <div class="form-group">
+          <label for="org-name">Organization Name <span class="required">*</span></label>
+          <input type="text" id="org-name" name="name" required />
+          <span id="name-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="org-description">Description</label>
+          <textarea id="org-description" name="description" rows="4"></textarea>
+          <span id="description-error" class="error-message"></span>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" id="cancel-create" class="btn-cancel">Cancel</button>
+          <button type="submit" class="btn-submit">Create Organization</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <link rel="stylesheet" href="/css/organization.css" />
   <script src="/js/error.js"></script>
   <script src="/js/dashboard.js"></script>
+  <script src="/js/organization.js"></script>
 </body>
 </html>
 
