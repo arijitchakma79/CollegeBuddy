@@ -15,10 +15,6 @@ router.get('/profile', authenticateUser, (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'client', 'protected', 'profile.html'));
 });
 
-router.get('/events', authenticateUser, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'client', 'protected', 'events.html'));
-});
-
 router.get('/organizations', authenticateUser, (req, res) => {
   res.sendFile(path.join(__dirname, '..', '..', 'client', 'protected', 'organizations.html'));
 });
