@@ -13,6 +13,7 @@ const organizationsRoutes = require("./routes/organizations");
 // Import API routes
 const authApi = require("./api/auth");
 const organizationsApi = require("./api/organizations");
+const membershipsApi = require("./api/memberships");
 
 // Middleware
 app.use(express.json()); // Parse JSON bodies
@@ -31,6 +32,7 @@ app.use("/organizations", organizationsRoutes);
 // API routes - handle API endpoints
 app.use("/api/auth", authApi);
 app.use("/api/organizations", organizationsApi);
+app.use("/api/memberships", membershipsApi);
 
 app.listen(port, hostname, function () {
   console.log(`http://${hostname}:${port}`);

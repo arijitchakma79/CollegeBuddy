@@ -5,10 +5,15 @@ const { authenticateUser } = require("../middleware/auth");
 
 // POST /api/organizations/create - Create a new organization
 router.post('/create', authenticateUser, async (req, res) => {
+    console.log('=== POST /api/organizations/create called ===');
+    console.log('Request body:', req.body);
+    console.log('User from req.user:', req.user);
+    
     const { name, description } = req.body;
     
     // Validation
     if (!name || name.trim() === '') {
+        console.log('Validation failed: name is empty');
         return res.status(400).json({
             success: false,
             message: 'Organization name is required'
@@ -16,7 +21,21 @@ router.post('/create', authenticateUser, async (req, res) => {
     }
     
     try {
-        const { data, error } = await supabase
+        const user_id = req.user?.id; // Get user ID from authenticated request
+        
+        console.log('Creating organization for user:', user_id);
+        console.log('Organization name:', name);
+        
+        if (!user_id) {
+            console.error('No user_id found in req.user');
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+        
+        // Create the organization
+        const { data: orgData, error: orgError } = await supabase
             .from('organizations')
             .insert({
                 name: name.trim(),
@@ -26,18 +45,63 @@ router.post('/create', authenticateUser, async (req, res) => {
             .select()
             .single();
 
-        if (error) {
+        if (orgError) {
+            console.error('Error creating organization:', orgError);
             return res.status(400).json({
                 success: false,
                 message: 'Failed to create organization',
-                error: error.message
+                error: orgError.message
             });
         }
 
+        console.log('Organization created successfully:', orgData);
+
+        // Automatically add creator as admin member
+        if (!orgData || !orgData.org_id) {
+            return res.status(500).json({
+                success: false,
+                message: 'Organization was created but org_id is missing',
+                error: 'Invalid organization data returned'
+            });
+        }
+
+        console.log('Creating membership for user:', user_id, 'org_id:', orgData.org_id);
+        
+        const { data: membershipData, error: membershipError } = await supabase
+            .from('organization_memberships')
+            .insert({
+                user_id: user_id,
+                org_id: orgData.org_id,
+                role: 'admin'
+            })
+            .select()
+            .single();
+
+        if (membershipError) {
+            console.error('Failed to create membership for organization creator:', membershipError);
+            console.error('Error details:', JSON.stringify(membershipError, null, 2));
+            
+            // Try to delete the organization if membership creation fails
+            await supabase
+                .from('organizations')
+                .delete()
+                .eq('org_id', orgData.org_id);
+            
+            return res.status(500).json({
+                success: false,
+                message: 'Organization created but failed to add you as admin. Organization has been removed.',
+                error: membershipError.message,
+                details: membershipError
+            });
+        }
+
+        console.log('Membership created successfully:', membershipData);
+
         return res.status(201).json({
             success: true,
-            message: 'Organization created successfully',
-            organization: data
+            message: 'Organization created successfully. You have been added as an admin.',
+            organization: orgData,
+            membership: membershipData
         });
     } catch (err) {
         return res.status(500).json({
