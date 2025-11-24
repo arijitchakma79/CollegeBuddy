@@ -1,0 +1,120 @@
+/* Profile page specific styles */
+
+.profile-section {
+  margin-bottom: 30px;
+}
+
+.profile-section h3 {
+  font-size: 1.3rem;
+  color: #333;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.profile-section p {
+  font-size: 16px;
+  margin: 15px 0;
+  color: #555;
+}
+
+.memberships-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.membership-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.membership-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.membership-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.membership-card-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.role-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.role-admin {
+  background-color: #ffd100;
+  color: #000;
+}
+
+.role-member {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.membership-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.membership-description {
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.membership-id {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.memberships-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.memberships-empty p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 1rem;
+  color: #666;
+  font-style: italic;
+}
+
+.hidden {
+  display: none !important;
+}
+

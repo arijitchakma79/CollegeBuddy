@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Profile - College Buddy</title>
   <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="/css/profile.css" />
 </head>
 <body>
   <div id="error-banner" class="error-message hidden">
@@ -40,9 +41,19 @@
       <div class="page-content">
         <h2>Profile</h2>
         <div class="profile-section">
+          <h3>Personal Information</h3>
           <p><strong>Name:</strong> <span id="profile-name">Loading...</span></p>
           <p><strong>Username:</strong> <span id="profile-username">Loading...</span></p>
           <p><strong>Email:</strong> <span id="profile-email">Loading...</span></p>
+        </div>
+        
+        <div class="profile-section">
+          <h3>My Organizations</h3>
+          <div id="memberships-loading" class="loading">Loading memberships...</div>
+          <div id="memberships-list" class="memberships-list hidden"></div>
+          <div id="memberships-empty" class="memberships-empty hidden">
+            <p>You are not a member of any organizations yet.</p>
+          </div>
         </div>
       </div>
     </div>
