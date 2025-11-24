@@ -8,20 +8,38 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function authenticateUser(req, res, next) {
   try {
+    // Check for token in Authorization header (for API calls)
+    let token = null;
     const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(" ")[1];
+    } 
+    // Check for token in cookie (for page requests)
+    else if (req.cookies && req.cookies.authToken) {
+      token = req.cookies.authToken;
+    }
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
+      // For HTML requests, redirect to login
+      if (req.headers.accept && req.headers.accept.includes('text/html')) {
+        return res.redirect('/auth/login');
+      }
+      // For API requests, return JSON error
       return res.status(401).json({
         success: false,
         message: 'No authentication token provided'
       });
     }
 
-    const token = authHeader.split(" ")[1];
-
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data?.user) {
+      // For HTML requests, redirect to login
+      if (req.headers.accept && req.headers.accept.includes('text/html')) {
+        return res.redirect('/auth/login');
+      }
+      // For API requests, return JSON error
       return res.status(401).json({
         success: false,
         message: 'Invalid or expired token',
@@ -33,6 +51,11 @@ async function authenticateUser(req, res, next) {
     next();
 
   } catch (err) {
+    // For HTML requests, redirect to login
+    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+      return res.redirect('/auth/login');
+    }
+    // For API requests, return JSON error
     return res.status(500).json({
       success: false,
       message: 'Authentication error',

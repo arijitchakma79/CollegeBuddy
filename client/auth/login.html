@@ -22,7 +22,12 @@
       <input type="email" id="email" name="email" required />
 
       <label for="password">Password</label>
-      <input type="password" id="password" name="password" required />
+      <div class="password-container">
+        <input type="password" id="password" name="password" required />
+        <button type="button" class="password-toggle" onclick="togglePassword('password')">
+          <span class="toggle-icon">👁️</span>
+        </button>
+      </div>
 
       <button type="submit" class="btn blue-btn">Login</button>
     </form>
@@ -38,6 +43,11 @@
   <script src="/js/auth.js"></script>
 
   <script>
+    // Check if user is already logged in when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      checkExistingAuth();
+    });
+    
     document.getElementById("login-form").addEventListener("submit", submitLogin);
   </script>
 

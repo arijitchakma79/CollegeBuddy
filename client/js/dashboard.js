@@ -1,5 +1,18 @@
-function logout() {
+async function logout() {
+    // Clear all auth-related data from localStorage
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('session');
+    
+    // Clear server-side cookie
+    try {
+        await fetch('/api/auth/logout', {
+            method: 'POST'
+        });
+    } catch (error) {
+        console.error('Error during logout:', error);
+    }
+    
     window.location.href = '/auth/login';
 }
 
@@ -21,11 +34,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const token = localStorage.getItem('authToken');
 
+    // If no token, redirect to login
     if (!token) {
-        window.location.href = "/auth/login";
+        window.location.href = '/auth/login';
         return;
     }
 
+    // Validate token and load user data
     try {
         const response = await fetch('/api/auth/me', {
             headers: {
@@ -35,19 +50,33 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const result = await response.json();
 
-        if (!result.success) {
-            window.location.href = "/auth/login";
+        if (!result.success || !result.user) {
+            // Token is invalid, clear it and redirect to login
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('session');
+            window.location.href = '/auth/login';
             return;
         }
 
+        // Token is valid, load user data
         const user = result.user;
-
-        document.getElementById('profile-name').textContent = user.user_metadata.fullName;
-        document.getElementById('profile-username').textContent = user.user_metadata.username;
-        document.getElementById('profile-email').textContent = user.email;
-
+        
+        if (document.getElementById('profile-name')) {
+            document.getElementById('profile-name').textContent = user.user_metadata?.fullName || 'N/A';
+        }
+        if (document.getElementById('profile-username')) {
+            document.getElementById('profile-username').textContent = user.user_metadata?.username || 'N/A';
+        }
+        if (document.getElementById('profile-email')) {
+            document.getElementById('profile-email').textContent = user.email || 'N/A';
+        }
     } catch (error) {
         console.error("Failed to load profile:", error);
-        window.location.href = "/auth/login";
+        // On error, clear tokens and redirect to login
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('session');
+        window.location.href = '/auth/login';
     }
 });

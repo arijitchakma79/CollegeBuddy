@@ -49,6 +49,48 @@ input {
   margin-bottom: 15px;
   border: 1px solid #ccc;
   border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.password-container {
+  position: relative;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+.password-container input {
+  width: 100%;
+  padding-right: 45px;
+  margin: 0;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 18px;
+}
+
+.password-toggle:hover {
+  opacity: 0.7;
+}
+
+.password-toggle:focus {
+  outline: none;
+}
+
+.toggle-icon {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .btn {

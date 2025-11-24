@@ -18,6 +18,10 @@ const organizationsApi = require("./api/organizations");
 app.use(express.json()); // Parse JSON bodies
 app.use(express.static(path.join(__dirname, "..", "client")));
 
+// Cookie parser for reading cookies
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
 // Page routes - serve HTML pages
 app.use("/", indexRoutes);
 app.use("/auth", authRoutes);
