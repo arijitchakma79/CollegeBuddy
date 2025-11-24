@@ -37,9 +37,9 @@ function displayOrganizations(organizations) {
         
         let actionButton = '';
         if (isMember) {
-            actionButton = '<button class="org-member-btn" onclick="handleStartOrg(' + org.org_id + ')">Member</button>';
+            actionButton = '<button class="org-member-btn" onclick="handleStartOrg(event, ' + org.org_id + ')">Member</button>';
         } else {
-            actionButton = '<button class="org-join-btn" onclick="handleJoinOrg(' + org.org_id + ')">Join</button>';
+            actionButton = '<button class="org-join-btn" onclick="handleJoinOrg(event, ' + org.org_id + ')">Join</button>';
         }
         
         orgCard.innerHTML = `
@@ -57,6 +57,11 @@ function displayOrganizations(organizations) {
                 </div>
             </div>
         `;
+        // Allow clicking anywhere on the card to view the organization
+        orgCard.addEventListener('click', () => {
+            window.location.href = `/organizations/${org.org_id}`;
+        });
+        
         organizationsList.appendChild(orgCard);
     });
 
@@ -122,13 +127,19 @@ async function loadUserMemberships() {
 }
 
 // Handle start organization button click (for members)
-function handleStartOrg(orgId) {
+function handleStartOrg(event, orgId) {
+    if (event) {
+        event.stopPropagation();
+    }
     // Navigate to organization detail page
     window.location.href = `/organizations/${orgId}`;
 }
 
 // Handle join organization button click
-async function handleJoinOrg(orgId) {
+async function handleJoinOrg(event, orgId) {
+    if (event) {
+        event.stopPropagation();
+    }
     const token = localStorage.getItem('authToken');
     if (!token) {
         showError('You must be logged in to join an organization');
