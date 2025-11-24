@@ -299,6 +299,164 @@ body {
   justify-content: flex-end;
 }
 
+/* Organization Detail Page */
+.org-detail {
+  width: 100%;
+}
+
+.org-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #007bff;
+}
+
+.org-detail-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 2rem;
+}
+
+.create-event-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.create-event-btn:hover {
+  background-color: #0056b3;
+}
+
+.org-detail-body {
+  margin-top: 2rem;
+}
+
+.org-description-section {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.org-description-section h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.5rem;
+}
+
+.org-description-section .description {
+  color: #555;
+  line-height: 1.8;
+  font-size: 1rem;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.org-events-section {
+  margin-top: 2rem;
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.org-events-section h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.5rem;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.event-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.event-card-header {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.event-card-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.event-description {
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.event-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.event-date,
+.event-location,
+.event-cap,
+.event-price,
+.event-restricted {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.event-restricted {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.events-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.events-empty p {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .org-member-btn {
   background-color: #ffd100;
   color: #000;

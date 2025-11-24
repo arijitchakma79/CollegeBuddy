@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organization Details - College Buddy</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="/css/organization.css" />
+</head>
+<body>
+  <div id="error-banner" class="error-message hidden">
+    <span id="error-message"></span>
+  </div>
+
+  <div class="dashboard-container">
+    <div class="sidebar-nav">
+      <div class="sidebar-header">
+        <h1>College Buddy</h1>
+        <p class="welcome-message">Welcome, <span id="navbar-username">User</span>!</p>
+      </div>
+      <nav class="vertical-nav">
+        <a href="/protected/home" class="nav-item">
+          <span class="nav-text">Home</span>
+        </a>
+        <a href="/protected/profile" class="nav-item">
+          <span class="nav-text">Profile</span>
+        </a>
+        <a href="/protected/organizations" class="nav-item active">
+          <span class="nav-text">Organizations</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+      <div class="page-content">
+        <div id="loading" class="loading">Loading organization...</div>
+        
+        <div id="org-detail" class="org-detail hidden">
+          <div class="org-detail-header">
+            <h2 id="org-title">Organization Name</h2>
+            <button id="create-event-btn" class="create-event-btn hidden">Create Event</button>
+          </div>
+          
+          <div class="org-detail-body">
+            <div class="org-description-section">
+              <h3>Description</h3>
+              <p id="org-description" class="description">No description available.</p>
+            </div>
+            
+            <div class="org-events-section">
+              <h3>Events</h3>
+              <div id="events-loading" class="loading">Loading events...</div>
+              <div id="events-list" class="events-list hidden"></div>
+              <div id="events-empty" class="events-empty hidden">
+                <p>No events found for this organization.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="not-found" class="not-found hidden">
+          <p>Organization not found.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Event Modal -->
+  <div id="create-event-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Create New Event</h3>
+        <button id="close-event-modal" class="close-btn">&times;</button>
+      </div>
+      <form id="create-event-form" class="modal-form">
+        <div class="form-group">
+          <label for="event-title">Event Title <span class="required">*</span></label>
+          <input type="text" id="event-title" name="title" required />
+          <span id="title-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="event-description">Description</label>
+          <textarea id="event-description" name="description" rows="4"></textarea>
+          <span id="description-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="event-location">Location</label>
+          <input type="text" id="event-location" name="location" />
+          <span id="location-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="event-start-time">Start Time <span class="required">*</span></label>
+          <input type="datetime-local" id="event-start-time" name="start_time" required />
+          <span id="start-time-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="event-end-time">End Time <span class="required">*</span></label>
+          <input type="datetime-local" id="event-end-time" name="end_time" required />
+          <span id="end-time-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="event-attendee-cap">Attendee Cap</label>
+          <input type="number" id="event-attendee-cap" name="attendee_cap" min="1" />
+          <span id="attendee-cap-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="event-price">Price (in dollars)</label>
+          <input type="number" id="event-price" name="price" min="0" step="0.01" />
+          <span id="price-error" class="error-message"></span>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" id="cancel-event" class="btn-cancel">Cancel</button>
+          <button type="submit" class="btn-submit">Create Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/error.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/organization-detail.js"></script>
+</body>
+</html>
+

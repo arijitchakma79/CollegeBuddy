@@ -123,11 +123,8 @@ async function loadUserMemberships() {
 
 // Handle start organization button click (for members)
 function handleStartOrg(orgId) {
-    // TODO: Navigate to organization page or perform action
-    console.log('Starting organization:', orgId);
-    // For now, just show a message or navigate
-    // You can implement navigation to a specific organization page here
-    alert('Starting organization with ID: ' + orgId);
+    // Navigate to organization detail page
+    window.location.href = `/organizations/${orgId}`;
 }
 
 // Handle join organization button click
