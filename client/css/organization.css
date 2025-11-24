@@ -291,6 +291,46 @@ body {
   font-size: 0.85rem;
 }
 
+.org-card-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.org-member-btn {
+  background-color: #ffd100;
+  color: #000;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.org-member-btn:hover {
+  background-color: #e6bc00;
+}
+
+.org-join-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.org-join-btn:hover {
+  background-color: #218838;
+}
+
 /* Modal */
 .modal {
   position: fixed;

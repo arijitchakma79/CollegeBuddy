@@ -15,6 +15,9 @@ function formatDate(dateString) {
     }
 }
 
+// Store user memberships
+let userMemberships = new Set();
+
 // Display all organizations
 function displayOrganizations(organizations) {
     const organizationsList = document.getElementById('organizations-list');
@@ -28,8 +31,17 @@ function displayOrganizations(organizations) {
     organizationsList.innerHTML = '';
     
     organizations.forEach(org => {
+        const isMember = userMemberships.has(org.org_id);
         const orgCard = document.createElement('div');
         orgCard.className = 'org-card';
+        
+        let actionButton = '';
+        if (isMember) {
+            actionButton = '<button class="org-member-btn" onclick="handleStartOrg(' + org.org_id + ')">Member</button>';
+        } else {
+            actionButton = '<button class="org-join-btn" onclick="handleJoinOrg(' + org.org_id + ')">Join</button>';
+        }
+        
         orgCard.innerHTML = `
             <div class="org-card-header">
                 <h3>${org.name || 'Unnamed Organization'}</h3>
@@ -39,6 +51,9 @@ function displayOrganizations(organizations) {
                 <p class="org-card-description">${org.description || 'No description available.'}</p>
                 <div class="org-card-info">
                     <span class="org-card-date">Created: ${formatDate(org.created_at)}</span>
+                </div>
+                <div class="org-card-actions">
+                    ${actionButton}
                 </div>
             </div>
         `;
@@ -76,6 +91,78 @@ function hideError() {
     }
 }
 
+// Load user memberships
+async function loadUserMemberships() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    
+    try {
+        const response = await fetch('/api/memberships', {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.memberships) {
+                userMemberships.clear();
+                result.memberships.forEach(membership => {
+                    if (membership.org_id) {
+                        userMemberships.add(membership.org_id);
+                    } else if (membership.organizations && membership.organizations.org_id) {
+                        userMemberships.add(membership.organizations.org_id);
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading memberships:', error);
+    }
+}
+
+// Handle start organization button click (for members)
+function handleStartOrg(orgId) {
+    // TODO: Navigate to organization page or perform action
+    console.log('Starting organization:', orgId);
+    // For now, just show a message or navigate
+    // You can implement navigation to a specific organization page here
+    alert('Starting organization with ID: ' + orgId);
+}
+
+// Handle join organization button click
+async function handleJoinOrg(orgId) {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        showError('You must be logged in to join an organization');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/memberships', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ org_id: orgId, role: 'member' })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            showError(data.message || 'Failed to join organization');
+            return;
+        }
+        
+        // Success - reload organizations to update button
+        loadOrganizations();
+    } catch (error) {
+        console.error('Error joining organization:', error);
+        showError('An error occurred while joining the organization');
+    }
+}
+
 // Fetch all organizations
 async function loadOrganizations() {
     // Show loading state
@@ -88,6 +175,9 @@ async function loadOrganizations() {
     if (notFound) notFound.classList.add('hidden');
     
     try {
+        // Load user memberships first
+        await loadUserMemberships();
+        
         const response = await fetch('/api/organizations');
         const data = await response.json();
 
