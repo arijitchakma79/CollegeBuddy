@@ -3,14 +3,6 @@ const router = express.Router();
 const supabase = require("../services/supabaseClient");
 const { authenticateUser } = require("../middleware/auth");
 
-// Debug middleware - log all requests to events API
-router.use((req, res, next) => {
-    console.log(`[EVENTS API] ${req.method} ${req.path} - Original URL: ${req.originalUrl}`);
-    if (req.method === 'POST') {
-        console.log(`[EVENTS API] POST request body:`, req.body);
-    }
-    next();
-});
 
 // POST /api/events/create - Create a new event
 router.post('/create', authenticateUser, async (req, res) => {
@@ -85,7 +77,7 @@ router.post('/create', authenticateUser, async (req, res) => {
             end_time: end_time
         };
         
-        // Add optional fields if provided
+        
         if (description) {
             eventData.description = description.trim();
         }

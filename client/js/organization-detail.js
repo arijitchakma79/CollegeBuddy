@@ -189,6 +189,12 @@ function displayEvents(events) {
     events.forEach(event => {
         const eventCard = document.createElement('div');
         eventCard.className = 'event-card';
+        eventCard.style.cursor = 'pointer'; // Make it look clickable
+        
+        // Add click handler to navigate to event detail page
+        eventCard.addEventListener('click', () => {
+            window.location.href = `/events/${event.event_id}`;
+        });
         
         const startDate = new Date(event.start_time);
         const endDate = new Date(event.end_time);

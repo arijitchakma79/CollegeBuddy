@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Details - College Buddy</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="/css/organization.css" />
+</head>
+<body>
+  <div id="error-banner" class="error-message hidden">
+    <span id="error-message"></span>
+  </div>
+
+  <div class="dashboard-container">
+    <div class="sidebar-nav">
+      <div class="sidebar-header">
+        <h1>College Buddy</h1>
+        <p class="welcome-message">Welcome, <span id="navbar-username">User</span>!</p>
+      </div>
+      <nav class="vertical-nav">
+        <a href="/protected/home" class="nav-item">
+          <span class="nav-text">Home</span>
+        </a>
+        <a href="/protected/profile" class="nav-item">
+          <span class="nav-text">Profile</span>
+        </a>
+        <a href="/protected/organizations" class="nav-item active">
+          <span class="nav-text">Organizations</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="dashboard-content">
+      <div class="page-content">
+        <div id="loading" class="loading">Loading event...</div>
+        
+        <div id="event-detail" class="org-detail hidden">
+          <div class="org-detail-header">
+            <h2 id="event-title">Event Title</h2>
+            <button id="back-btn" class="btn-secondary">← Back</button>
+          </div>
+          
+          <div class="org-detail-body">
+            <div class="org-description-section">
+              <h3>Description</h3>
+              <p id="event-description" class="description">No description available.</p>
+            </div>
+            
+            <div class="org-events-section">
+              <h3>Event Details</h3>
+              <div id="event-details" class="info-grid">
+                <!-- Event details will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="not-found" class="not-found hidden">
+          <p>Event not found.</p>
+          <a href="/protected/organizations" class="btn-primary">Back to Organizations</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/error.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/event-detail.js"></script>
+</body>
+</html>
+
