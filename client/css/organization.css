@@ -225,9 +225,11 @@ body {
 
 /* Organizations list */
 .organizations-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Organization card */
@@ -237,6 +239,9 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
   transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .org-card:hover {
@@ -524,7 +529,7 @@ body {
   }
 
   .organizations-list {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .modal-content {
