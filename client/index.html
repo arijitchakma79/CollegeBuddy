@@ -3,14 +3,139 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>College Buddy</title>
+  <title>College Buddy - Your Campus Connection Platform</title>
   <link rel="stylesheet" href="/auth.css">
+  <style>
+    .landing-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .hero-section {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .hero-section h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: #07294D;
+    }
+    
+    .hero-section p {
+      font-size: 1.2rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    
+    .get-started-btn {
+      display: inline-block;
+      padding: 16px 40px;
+      background: linear-gradient(135deg, #07294D 0%, #0a3b6a 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      box-shadow: 0 4px 15px rgba(7, 41, 77, 0.3);
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+    }
+    
+    .get-started-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(7, 41, 77, 0.4);
+      background: linear-gradient(135deg, #0a3b6a 0%, #07294D 100%);
+    }
+    
+    .get-started-btn:active {
+      transform: translateY(0);
+    }
+    
+    .features-section {
+      margin-bottom: 3rem;
+    }
+    
+    .features-section h2 {
+      font-size: 2rem;
+      color: #07294D;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .feature-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .feature-card h3 {
+      color: #07294D;
+      margin-bottom: 0.5rem;
+      font-size: 1.3rem;
+    }
+    
+    .feature-card p {
+      color: #555;
+      line-height: 1.6;
+    }
+    
+    
+    @media (max-width: 768px) {
+      .hero-section h1 {
+        font-size: 2rem;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .get-started-btn {
+        width: 100%;
+        padding: 14px 30px;
+        font-size: 1.1rem;
+      }
+    }
+  </style>
 </head>
 <body class="center-page">
-  <div class="card">
-    <h1 class="title">College Buddy</h1>
-    <a class="btn blue-btn" href="/auth/login">Login</a>
-    <a class="btn gold-btn" href="/auth/register">Register</a>
+  <div class="landing-container">
+    <div class="hero-section">
+      <h1>Welcome to College Buddy</h1>
+      <p>Your all-in-one platform for campus connections, organizations, and events</p>
+    </div>
+    
+    <div class="features-section">
+      <h2>What is College Buddy?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>🏛️ Organizations</h3>
+          <p>Discover and join campus organizations that match your interests. Create your own organization and build a community around what you're passionate about.</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>📅 Events</h3>
+          <p>Stay connected with campus events happening around you. Browse upcoming events, RSVP, and never miss out on opportunities to engage with your community.</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>👤 Profile</h3>
+          <p>Build your personal profile to showcase your interests, memberships, and involvement across campus. Connect with other students and organizations.</p>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 3rem;">
+        <a href="/auth/login" class="get-started-btn">Get Started</a>
+      </div>
+    </div>
   </div>
 </body>
 </html>

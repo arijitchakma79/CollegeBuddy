@@ -265,7 +265,6 @@ function updateRsvpUI() {
     const rsvpGoingBtn = document.getElementById('rsvp-going');
     const rsvpMaybeBtn = document.getElementById('rsvp-maybe');
     const rsvpNotGoingBtn = document.getElementById('rsvp-not-going');
-    const rsvpCancelBtn = document.getElementById('rsvp-cancel');
     
     if (!rsvpStatus) return;
     
@@ -281,9 +280,6 @@ function updateRsvpUI() {
     if (rsvpNotGoingBtn) {
         rsvpNotGoingBtn.classList.remove('active');
         rsvpNotGoingBtn.disabled = false;
-    }
-    if (rsvpCancelBtn) {
-        rsvpCancelBtn.classList.add('hidden');
     }
     
     if (currentRsvp) {
@@ -303,11 +299,6 @@ function updateRsvpUI() {
         } else if (currentRsvp.status === 'not_going' && rsvpNotGoingBtn) {
             rsvpNotGoingBtn.classList.add('active');
         }
-        
-        // Show cancel button
-        if (rsvpCancelBtn) {
-            rsvpCancelBtn.classList.remove('hidden');
-        }
     } else {
         rsvpStatus.innerHTML = '<p class="rsvp-status-text">You haven\'t RSVPed yet</p>';
     }
@@ -318,18 +309,16 @@ function updateRsvpCountsUI(counts) {
     const rsvpCounts = document.getElementById('rsvp-counts');
     if (!rsvpCounts) return;
     
+    const goingCount = counts.going || 0;
+    const attendeeText = goingCount === 1 ? 'person' : 'people';
+    
     rsvpCounts.innerHTML = `
-        <div class="rsvp-count-item">
-            <span class="rsvp-count-label">Going:</span>
-            <span class="rsvp-count-value">${counts.going}</span>
-        </div>
-        <div class="rsvp-count-item">
-            <span class="rsvp-count-label">Maybe:</span>
-            <span class="rsvp-count-value">${counts.maybe}</span>
-        </div>
-        <div class="rsvp-count-item">
-            <span class="rsvp-count-label">Not Going:</span>
-            <span class="rsvp-count-value">${counts.not_going}</span>
+        <div class="rsvp-count-display">
+            <span class="rsvp-count-icon">👥</span>
+            <div class="rsvp-count-content">
+                <span class="rsvp-count-value">${goingCount}</span>
+                <span class="rsvp-count-label">${attendeeText} going</span>
+            </div>
         </div>
     `;
 }
@@ -379,48 +368,6 @@ async function handleRsvp(status) {
     }
 }
 
-// Handle cancel RSVP
-async function handleCancelRsvp() {
-    if (!currentEventId) return;
-    
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        showError('You must be logged in to cancel RSVP');
-        return;
-    }
-    
-    if (!confirm('Are you sure you want to cancel your RSVP?')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/events/${currentEventId}/rsvp`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            showError(data.message || 'Failed to cancel RSVP');
-            return;
-        }
-        
-        // Reload RSVP and counts
-        currentRsvp = null;
-        await loadRsvp();
-        await loadRsvpCounts();
-        
-        showSuccess('RSVP cancelled successfully');
-        
-    } catch (error) {
-        console.error('Error cancelling RSVP:', error);
-        showError('An error occurred while cancelling your RSVP');
-    }
-}
-
 // Show success message
 function showSuccess(message) {
     const errorBanner = document.getElementById('error-banner');
@@ -452,7 +399,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const rsvpGoingBtn = document.getElementById('rsvp-going');
     const rsvpMaybeBtn = document.getElementById('rsvp-maybe');
     const rsvpNotGoingBtn = document.getElementById('rsvp-not-going');
-    const rsvpCancelBtn = document.getElementById('rsvp-cancel');
     
     if (rsvpGoingBtn) {
         rsvpGoingBtn.addEventListener('click', () => handleRsvp('going'));
@@ -462,9 +408,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (rsvpNotGoingBtn) {
         rsvpNotGoingBtn.addEventListener('click', () => handleRsvp('not_going'));
-    }
-    if (rsvpCancelBtn) {
-        rsvpCancelBtn.addEventListener('click', handleCancelRsvp);
     }
 });
 

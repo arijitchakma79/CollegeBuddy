@@ -340,6 +340,7 @@ async function handleCreateEvent(event) {
     const endTime = document.getElementById('event-end-time').value;
     const attendeeCap = document.getElementById('event-attendee-cap').value;
     const price = document.getElementById('event-price').value;
+    const isPublic = document.getElementById('event-public').checked;
     
     console.log('Form data:', { title, startTime, endTime, currentOrgId });
     
@@ -405,6 +406,9 @@ async function handleCreateEvent(event) {
         if (price) {
             eventData.price_cents = Math.round(parseFloat(price) * 100);
         }
+        
+        // Set public field (if public is true, restricted_to_org will be false)
+        eventData.public = isPublic;
         
         console.log('Sending POST request to /api/events/create with data:', eventData);
         console.log('Auth token present:', !!authToken);

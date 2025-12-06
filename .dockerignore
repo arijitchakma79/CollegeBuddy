@@ -1,6 +1,12 @@
-/.git
-/node_modules
-.dockerignore
+node_modules
+npm-debug.log
 .env
+.git
+.gitignore
+.dockerignore
 Dockerfile
 fly.toml
+.DS_Store
+*.md
+.vscode
+.idea

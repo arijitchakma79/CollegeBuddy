@@ -19,6 +19,7 @@ router.post('/create', authenticateUser, async (req, res) => {
         end_time, 
         attendee_cap, 
         price_cents, 
+        public: isPublic,
         restricted_to_org,
         created_by_org_id 
     } = req.body;
@@ -99,8 +100,16 @@ router.post('/create', authenticateUser, async (req, res) => {
             eventData.price_cents = parseInt(price_cents);
         }
         
-        if (restricted_to_org !== undefined) {
+        // Set restricted_to_org based on public field
+        // If public is true, restricted_to_org is false, else true
+        if (isPublic !== undefined) {
+            eventData.restricted_to_org = !Boolean(isPublic);
+        } else if (restricted_to_org !== undefined) {
+            // Backward compatibility: if public is not provided, use restricted_to_org
             eventData.restricted_to_org = Boolean(restricted_to_org);
+        } else {
+            // Default: if not specified, make it public (restricted_to_org = false)
+            eventData.restricted_to_org = false;
         }
         
         // Create the event
@@ -173,7 +182,53 @@ router.get('/', async (req, res) => {
             });
         }
 
-        const events = data || [];
+        let events = data || [];
+        
+        // Filter out non-public events for users who aren't members
+        // Get user from token if provided
+        const authHeader = req.headers.authorization;
+        let authenticatedUserId = null;
+        let userMemberships = new Set();
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try {
+                const { createClient } = require('@supabase/supabase-js');
+                const path = require('path');
+                require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+                const supabaseUrl = process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_URL;
+                const supabaseKey = process.env.SUPABASE_API_KEY || process.env.SUPABASE_ANON_KEY;
+                const supabaseAuth = createClient(supabaseUrl, supabaseKey);
+                const { data: userData } = await supabaseAuth.auth.getUser(token);
+                if (userData?.user) {
+                    authenticatedUserId = userData.user.id;
+                    // Get user's organization memberships
+                    const { data: memberships } = await supabase
+                        .from('organization_memberships')
+                        .select('org_id')
+                        .eq('user_id', authenticatedUserId);
+                    if (memberships) {
+                        memberships.forEach(m => userMemberships.add(m.org_id));
+                    }
+                }
+            } catch (err) {
+                // Token invalid or expired, continue without authenticatedUserId
+            }
+        }
+        
+        // Filter events: show public events OR events where user is a member
+        events = events.filter(event => {
+            // If event is public (restricted_to_org = false), show it
+            if (!event.restricted_to_org) {
+                return true;
+            }
+            // If event is not public, only show if user is a member of the organization
+            if (event.restricted_to_org && event.created_by_org_id) {
+                return authenticatedUserId && userMemberships.has(event.created_by_org_id);
+            }
+            // If event has no organization, show it (backward compatibility)
+            return true;
+        });
 
         // If include_rsvp_stats is true, add RSVP statistics to each event
         if (include_rsvp_stats === 'true') {
@@ -263,6 +318,54 @@ router.get('/:id', async (req, res) => {
         }
 
         let event = data;
+        
+        // Check if event is public (restricted_to_org = false)
+        // If not public, verify user is a member of the organization
+        if (event.restricted_to_org && event.created_by_org_id) {
+            // Get user from token if provided
+            const authHeader = req.headers.authorization;
+            let user_id = null;
+            
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                const token = authHeader.split(' ')[1];
+                try {
+                    const { createClient } = require('@supabase/supabase-js');
+                    const path = require('path');
+                    require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+                    const supabaseUrl = process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_URL;
+                    const supabaseKey = process.env.SUPABASE_API_KEY || process.env.SUPABASE_ANON_KEY;
+                    const supabaseAuth = createClient(supabaseUrl, supabaseKey);
+                    const { data: userData } = await supabaseAuth.auth.getUser(token);
+                    if (userData?.user) {
+                        user_id = userData.user.id;
+                    }
+                } catch (err) {
+                    // Token invalid or expired, continue without user_id
+                }
+            }
+            
+            if (!user_id) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'This event is restricted to organization members. Please log in to access it.'
+                });
+            }
+            
+            // Check if user is a member of the organization
+            const { data: membership, error: membershipError } = await supabase
+                .from('organization_memberships')
+                .select('*')
+                .eq('user_id', user_id)
+                .eq('org_id', event.created_by_org_id)
+                .single();
+            
+            if (membershipError || !membership) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'This event is restricted to organization members only'
+                });
+            }
+        }
 
         // If include_rsvp_stats is true, add RSVP statistics
         if (include_rsvp_stats === 'true') {
@@ -366,7 +469,8 @@ router.put('/:id', authenticateUser, async (req, res) => {
             start_time, 
             end_time, 
             attendee_cap, 
-            price_cents, 
+            price_cents,
+            public: isPublic,
             restricted_to_org 
         } = req.body;
         
@@ -434,7 +538,12 @@ router.put('/:id', authenticateUser, async (req, res) => {
             updateData.price_cents = price_cents ? parseInt(price_cents) : null;
         }
         
-        if (restricted_to_org !== undefined) {
+        // Set restricted_to_org based on public field
+        // If public is true, restricted_to_org is false, else true
+        if (isPublic !== undefined) {
+            updateData.restricted_to_org = !Boolean(isPublic);
+        } else if (restricted_to_org !== undefined) {
+            // Backward compatibility: if public is not provided, use restricted_to_org
             updateData.restricted_to_org = Boolean(restricted_to_org);
         }
         

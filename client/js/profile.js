@@ -140,8 +140,10 @@ function displayMemberships(memberships) {
     
     memberships.forEach(membership => {
         const org = membership.organizations;
+        const orgId = org?.org_id || membership.org_id;
         const membershipCard = document.createElement('div');
         membershipCard.className = 'membership-card';
+        membershipCard.style.cursor = 'pointer';
         
         const roleBadge = membership.role === 'admin' ? 'admin' : 'member';
         const roleClass = membership.role === 'admin' ? 'role-admin' : 'role-member';
@@ -153,9 +155,16 @@ function displayMemberships(memberships) {
             </div>
             <div class="membership-card-body">
                 <p class="membership-description">${org?.description || 'No description available.'}</p>
-                <p class="membership-id">Organization ID: ${org?.org_id || membership.org_id || 'N/A'}</p>
+                <p class="membership-id">Organization ID: ${orgId || 'N/A'}</p>
             </div>
         `;
+        
+        // Make the card clickable to navigate to organization detail page
+        if (orgId) {
+            membershipCard.addEventListener('click', () => {
+                window.location.href = `/organizations/${orgId}`;
+            });
+        }
         
         listEl.appendChild(membershipCard);
     });
