@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Home - College Buddy</title>
   <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="/css/event.css" />
 </head>
 <body>
   <div id="error-banner" class="error-message hidden">
@@ -36,10 +37,30 @@
     <div class="dashboard-content">
       <div class="page-content">
         <h2>Dashboard</h2>
-        <p>Welcome to College Buddy! Navigate to different sections using the sidebar.</p>
-        <div class="dashboard-links">
-          <a href="/protected/profile" class="dashboard-link">View Profile</a>
-          <a href="/protected/organizations" class="dashboard-link">View Organizations</a>
+        <p>Welcome to College Buddy! Here are the latest events.</p>
+        
+        <!-- Upcoming Events Section -->
+        <div class="events-section">
+          <div class="events-header">
+            <h3>Upcoming Events</h3>
+          </div>
+          <div id="upcoming-loading" class="loading">Loading upcoming events...</div>
+          <div id="upcoming-events-list" class="events-list hidden"></div>
+          <div id="upcoming-events-empty" class="events-empty hidden">
+            <p>No upcoming events found.</p>
+          </div>
+        </div>
+
+        <!-- Past Events Section -->
+        <div class="events-section" style="margin-top: 3rem;">
+          <div class="events-header">
+            <h3>Past Events</h3>
+          </div>
+          <div id="past-loading" class="loading">Loading past events...</div>
+          <div id="past-events-list" class="events-list hidden"></div>
+          <div id="past-events-empty" class="events-empty hidden">
+            <p>No past events found.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -47,6 +68,8 @@
 
   <script src="/js/error.js"></script>
   <script src="/js/dashboard.js"></script>
+  <script src="/js/event.js"></script>
+  <script src="/js/home-events.js"></script>
 </body>
 </html>
 
