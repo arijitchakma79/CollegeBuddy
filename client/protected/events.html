@@ -39,14 +39,24 @@
 
     <div class="dashboard-content">
       <div class="page-content">
-        <h2>Events</h2>
-        <p>Your events will appear here.</p>
+        <div class="events-header">
+          <h2>Events</h2>
+        </div>
+        
+        <div id="loading" class="loading">Loading events...</div>
+        
+        <div id="events-list" class="events-list hidden"></div>
+        
+        <div id="events-empty" class="events-empty hidden">
+          <p>No events found. Check back later for upcoming events!</p>
+        </div>
       </div>
     </div>
   </div>
 
   <script src="/js/error.js"></script>
   <script src="/js/dashboard.js"></script>
+  <script src="/js/event.js"></script>
 </body>
 </html>
 
