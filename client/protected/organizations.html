@@ -39,7 +39,16 @@
           <h2>Organizations</h2>
           <button id="create-org-btn" class="create-org-btn">Create Organization</button>
         </div>
-        
+
+        <div class="search-container">
+          <input 
+            type="text"
+            id="searchInputOrg"
+            placeholder="Search organizations..."
+            class="search-bar"
+          />
+        </div>
+
         <div id="loading" class="loading">Loading organizations...</div>
         
         <div id="organizations-list" class="organizations-list hidden"></div>
@@ -51,7 +60,6 @@
     </div>
   </div>
 
-  <!-- Create Organization Modal -->
   <div id="create-org-modal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">
@@ -85,4 +93,3 @@
   <script src="/js/organization.js"></script>
 </body>
 </html>
-
