@@ -18,6 +18,8 @@ function formatDate(dateString) {
 // Store user memberships
 let userMemberships = new Set();
 
+let allOrganizations = [];
+
 // Display all organizations
 function displayOrganizations(organizations) {
     const organizationsList = document.getElementById('organizations-list');
@@ -196,7 +198,9 @@ async function loadOrganizations() {
         }
 
         if (data.success && data.organizations) {
-            displayOrganizations(data.organizations);
+            allOrganizations = data.organizations;
+            // Initial render = all
+            displayOrganizations(allOrganizations);
         } else {
             showError('Invalid response from server');
             showNotFound();
@@ -206,6 +210,26 @@ async function loadOrganizations() {
         showError('An error occurred while loading organizations');
         showNotFound();
     }
+}
+
+function applySearchFilter() {
+    const input = document.getElementById('searchInputOrg');
+    if (!input) return;
+
+    const q = input.value.toLowerCase().trim();
+
+    if (!q) {
+        // empty search → show all
+        displayOrganizations(allOrganizations);
+        return;
+    }
+
+    const filtered = allOrganizations.filter(org =>
+        (org.name && org.name.toLowerCase().includes(q)) ||
+        (org.description && org.description.toLowerCase().includes(q))
+    );
+
+    displayOrganizations(filtered);
 }
 
 // Modal functions
@@ -313,7 +337,6 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', handleCreateOrg);
     }
 
-    // Close modal when clicking outside
     const modal = document.getElementById('create-org-modal');
     if (modal) {
         modal.addEventListener('click', function(event) {
@@ -322,5 +345,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    const searchInput = document.getElementById('searchInputOrg');
+    if (searchInput) {
+        searchInput.addEventListener('input', applySearchFilter);
+    }
 });
+
 

@@ -18,6 +18,7 @@
         <h1>College Buddy</h1>
         <p class="welcome-message">Welcome, <span id="navbar-username">User</span>!</p>
       </div>
+
       <nav class="vertical-nav">
         <a href="/protected/home" class="nav-item">
           <span class="nav-text">Home</span>
@@ -32,6 +33,7 @@
           <span class="nav-text">Organizations</span>
         </a>
       </nav>
+
       <div class="sidebar-footer">
         <button class="logout-btn" onclick="logout()">Logout</button>
       </div>
@@ -39,14 +41,34 @@
 
     <div class="dashboard-content">
       <div class="page-content">
-        <h2>Events</h2>
-        <p>Your events will appear here.</p>
+
+        <div class="events-header">
+          <h2>Events</h2>
+          <p>Your events will appear here.</p>
+        </div>
+
+        <div class="search-wrapper">
+          <label for="searchInputEvent" class="search-label">Search Events</label>
+          <input 
+            type="text" 
+            id="searchInputEvent" 
+            placeholder="Search events..." 
+            class="search-input"
+          />
+        </div>
+
+        <div id="loading" class="loading hidden">Loading events...</div>
+        <div id="events-list" class="events-list hidden"></div>
+        <div id="not-found" class="not-found hidden">
+          <p>No events found.</p>
+        </div>
+
       </div>
     </div>
   </div>
 
   <script src="/js/error.js"></script>
   <script src="/js/dashboard.js"></script>
+  <script src="/js/event.js"></script>
 </body>
 </html>
-
