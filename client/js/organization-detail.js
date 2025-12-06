@@ -116,13 +116,21 @@ async function checkUserRole(orgId) {
             if (result.success && result.userRole) {
                 userRole = result.userRole;
                 
-                // Only show "Create Event" button if user is admin
+                // Only show "Create Event" and "Delete Organization" buttons if user is admin
                 const createEventBtn = document.getElementById('create-event-btn');
+                const deleteOrgBtn = document.getElementById('delete-org-btn');
                 if (createEventBtn) {
                     if (userRole === 'admin') {
                         createEventBtn.classList.remove('hidden');
                     } else {
                         createEventBtn.classList.add('hidden');
+                    }
+                }
+                if (deleteOrgBtn) {
+                    if (userRole === 'admin') {
+                        deleteOrgBtn.classList.remove('hidden');
+                    } else {
+                        deleteOrgBtn.classList.add('hidden');
                     }
                 }
             }
@@ -456,18 +464,84 @@ async function handleCreateEvent(event) {
     }
 }
 
+// Handle delete organization
+async function handleDeleteOrganization() {
+    if (!currentOrgId) return;
+    
+    const orgName = document.getElementById('org-title')?.textContent || 'this organization';
+    if (!confirm(`Are you sure you want to delete "${orgName}"? This action cannot be undone and will delete all events and memberships associated with this organization.`)) {
+        return;
+    }
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        showError('You must be logged in to delete an organization');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/organizations/${currentOrgId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            // Response is not JSON (likely HTML error page)
+            const text = await response.text();
+            console.error('Non-JSON response received:', text.substring(0, 200));
+            showError('Server returned an error page. Please check the console for details.');
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorMsg = data.message || data.error || 'Failed to delete organization';
+            console.error('Delete organization error:', data);
+            showError(errorMsg);
+            return;
+        }
+        
+        // Success - redirect to organizations page
+        showError('Organization deleted successfully!');
+        setTimeout(() => {
+            window.location.href = '/protected/organizations';
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Error deleting organization:', error);
+        showError(`An error occurred while deleting the organization: ${error.message}`);
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadOrganization();
     
     // Modal event listeners
     const createEventBtn = document.getElementById('create-event-btn');
+    const deleteOrgBtn = document.getElementById('delete-org-btn');
     const closeEventModalBtn = document.getElementById('close-event-modal');
     const cancelEventBtn = document.getElementById('cancel-event');
     const form = document.getElementById('create-event-form');
     
     if (createEventBtn) {
         createEventBtn.addEventListener('click', openEventModal);
+    }
+    
+    if (deleteOrgBtn) {
+        deleteOrgBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            handleDeleteOrganization();
+        });
     }
     
     if (closeEventModalBtn) {

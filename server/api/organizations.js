@@ -181,6 +181,122 @@ router.get('/search', async (req, res) => {
     }
 });
 
+// DELETE /api/organizations/:id - Delete an organization (admin only)
+// Must be defined before GET /:id to avoid route conflicts
+router.delete('/:id', authenticateUser, async (req, res) => {
+    console.log('=== DELETE /api/organizations/:id called ===');
+    console.log('Request params:', req.params);
+    console.log('Request user:', req.user);
+    
+    const { id } = req.params;
+    const user_id = req.user?.id;
+    
+    if (!user_id) {
+        console.error('No user_id found in req.user');
+        return res.status(401).json({
+            success: false,
+            message: 'User not authenticated'
+        });
+    }
+    
+    try {
+        // First, verify the user is an admin of this organization
+        const { data: membership, error: membershipError } = await supabase
+            .from('organization_memberships')
+            .select('*')
+            .eq('user_id', user_id)
+            .eq('org_id', id)
+            .eq('role', 'admin')
+            .single();
+        
+        if (membershipError || !membership) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only organization admins can delete organizations'
+            });
+        }
+        
+        // Get all events for this organization first
+        const { data: orgEvents, error: eventsFetchError } = await supabase
+            .from('events')
+            .select('event_id')
+            .eq('created_by_org_id', id);
+        
+        if (eventsFetchError) {
+            console.error('Error fetching events:', eventsFetchError);
+        } else if (orgEvents && orgEvents.length > 0) {
+            // Delete all RSVPs for these events first
+            const eventIds = orgEvents.map(e => e.event_id);
+            for (const eventId of eventIds) {
+                const { error: rsvpError } = await supabase
+                    .from('event_rsvps')
+                    .delete()
+                    .eq('event_id', eventId);
+                
+                if (rsvpError) {
+                    console.error(`Error deleting RSVPs for event ${eventId}:`, rsvpError);
+                }
+            }
+        }
+        
+        // Delete all events associated with this organization
+        const { error: eventsDeleteError } = await supabase
+            .from('events')
+            .delete()
+            .eq('created_by_org_id', id);
+        
+        if (eventsDeleteError) {
+            console.error('Error deleting events:', eventsDeleteError);
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to delete events associated with organization',
+                error: eventsDeleteError.message
+            });
+        }
+        
+        // Delete all memberships
+        const { error: membershipsDeleteError } = await supabase
+            .from('organization_memberships')
+            .delete()
+            .eq('org_id', id);
+        
+        if (membershipsDeleteError) {
+            console.error('Error deleting memberships:', membershipsDeleteError);
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to delete memberships',
+                error: membershipsDeleteError.message
+            });
+        }
+        
+        // Finally, delete the organization
+        const { error: deleteError } = await supabase
+            .from('organizations')
+            .delete()
+            .eq('org_id', id);
+        
+        if (deleteError) {
+            console.error('Error deleting organization:', deleteError);
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to delete organization',
+                error: deleteError.message
+            });
+        }
+        
+        return res.json({
+            success: true,
+            message: 'Organization deleted successfully'
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while deleting the organization',
+            error: err.message
+        });
+    }
+});
+
 // GET /api/organizations/:id - Get a specific organization by org_id
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
