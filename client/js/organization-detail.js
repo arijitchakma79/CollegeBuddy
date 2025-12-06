@@ -180,11 +180,22 @@ async function loadEvents(orgId) {
 }
 
 // Display events
-function displayEvents(events) {
+async function displayEvents(events) {
     const eventsList = document.getElementById('events-list');
     if (!eventsList) return;
     
     eventsList.innerHTML = '';
+    
+    // Load RSVPs for all events in parallel
+    const token = localStorage.getItem('authToken');
+    const rsvpPromises = events.map(event => loadEventRsvp(event.event_id, token));
+    const rsvps = await Promise.all(rsvpPromises);
+    const rsvpMap = {};
+    rsvps.forEach((rsvp, index) => {
+        if (rsvp) {
+            rsvpMap[events[index].event_id] = rsvp;
+        }
+    });
     
     events.forEach(event => {
         const eventCard = document.createElement('div');
@@ -215,9 +226,27 @@ function displayEvents(events) {
         
         const price = event.price_cents ? `$${(event.price_cents / 100).toFixed(2)}` : 'Free';
         
+        // Get RSVP status for this event
+        const rsvp = rsvpMap[event.event_id];
+        let rsvpBadge = '';
+        if (rsvp) {
+            const statusLabels = {
+                'going': 'Going',
+                'maybe': 'Maybe',
+                'not_going': 'Not Going'
+            };
+            const statusClasses = {
+                'going': 'rsvp-badge-going',
+                'maybe': 'rsvp-badge-maybe',
+                'not_going': 'rsvp-badge-not-going'
+            };
+            rsvpBadge = `<span class="rsvp-badge ${statusClasses[rsvp.status] || ''}">${statusLabels[rsvp.status] || 'RSVPed'}</span>`;
+        }
+        
         eventCard.innerHTML = `
             <div class="event-card-header">
                 <h4>${event.title || 'Untitled Event'}</h4>
+                ${rsvpBadge}
             </div>
             <div class="event-card-body">
                 <p class="event-description">${event.description || 'No description available.'}</p>
@@ -234,6 +263,29 @@ function displayEvents(events) {
         
         eventsList.appendChild(eventCard);
     });
+}
+
+// Load RSVP for a single event
+async function loadEventRsvp(eventId, token) {
+    if (!token) return null;
+    
+    try {
+        const response = await fetch(`/api/events/${eventId}/rsvp`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success && data.rsvp) {
+            return data.rsvp;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error loading RSVP for event ${eventId}:`, error);
+        return null;
+    }
 }
 
 // Modal functions

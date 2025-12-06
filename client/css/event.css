@@ -36,12 +36,18 @@
   border-bottom: 1px solid #e0e0e0;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
 
-.event-card-header h3 {
+.event-card-header h3,
+.event-card-header h4 {
   margin: 0;
   font-size: 1.2rem;
   color: #333;
+  flex: 1;
 }
 
 .event-card-body {
@@ -83,5 +89,31 @@
 
 .hidden {
   display: none !important;
+}
+
+/* RSVP Badge on Event Cards */
+.rsvp-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rsvp-badge-going {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.rsvp-badge-maybe {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.rsvp-badge-not-going {
+  background: #ffebee;
+  color: #c62828;
 }
 

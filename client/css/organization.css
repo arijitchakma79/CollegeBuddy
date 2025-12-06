@@ -697,6 +697,181 @@ body {
   padding: 1.5rem;
 }
 
+/* RSVP Styles */
+.org-rsvp-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e0e0e0;
+}
+
+.org-rsvp-section h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.rsvp-status {
+  margin-bottom: 1.5rem;
+}
+
+.rsvp-status-text {
+  font-size: 1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.rsvp-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.rsvp-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rsvp-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.rsvp-btn-going {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.rsvp-btn-going:hover {
+  background: #4caf50;
+  color: white;
+}
+
+.rsvp-btn-going.active {
+  background: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+.rsvp-btn-maybe {
+  border-color: #ff9800;
+  color: #ff9800;
+}
+
+.rsvp-btn-maybe:hover {
+  background: #ff9800;
+  color: white;
+}
+
+.rsvp-btn-maybe.active {
+  background: #ff9800;
+  color: white;
+  border-color: #ff9800;
+}
+
+.rsvp-btn-not-going {
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.rsvp-btn-not-going:hover {
+  background: #f44336;
+  color: white;
+}
+
+.rsvp-btn-not-going.active {
+  background: #f44336;
+  color: white;
+  border-color: #f44336;
+}
+
+.rsvp-btn-cancel {
+  border-color: #666;
+  color: #666;
+}
+
+.rsvp-btn-cancel:hover {
+  background: #666;
+  color: white;
+}
+
+.rsvp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rsvp-counts {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.rsvp-count-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rsvp-count-label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.rsvp-count-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* RSVP Badge on Event Cards */
+.rsvp-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rsvp-badge-going {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.rsvp-badge-maybe {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.rsvp-badge-not-going {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.event-card-header h4 {
+  flex: 1;
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;

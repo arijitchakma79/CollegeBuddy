@@ -425,5 +425,430 @@ router.delete('/:id', authenticateUser, async (req, res) => {
     }
 });
 
+// POST /api/events/:id/rsvp - Create or update an RSVP for an event
+router.post('/:id/rsvp', authenticateUser, async (req, res) => {
+    console.log('=== POST /api/events/:id/rsvp called ===');
+    console.log('Event ID:', req.params.id);
+    console.log('Request body:', req.body);
+    console.log('User from req.user:', req.user);
+    
+    const { id } = req.params;
+    const { status } = req.body;
+    const user_id = req.user?.id;
+    
+    if (!user_id) {
+        return res.status(401).json({
+            success: false,
+            message: 'User not authenticated'
+        });
+    }
+    
+    // Validate status - map frontend values to database values
+    // Database allows: 'pending', 'confirmed', 'cancelled'
+    const statusMap = {
+        'going': 'confirmed',
+        'maybe': 'pending',
+        'not_going': 'cancelled'
+    };
+    
+    const validStatuses = ['going', 'not_going', 'maybe'];
+    if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Valid status is required. Must be one of: going, not_going, maybe'
+        });
+    }
+    
+    // Map to database format: 'pending', 'confirmed', 'cancelled'
+    const dbStatus = statusMap[status];
+    
+    try {
+        // First, get the event to check organization and attendee cap
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('*')
+            .eq('event_id', id)
+            .single();
+        
+        if (eventError || !event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // Check if event has an organization
+        if (!event.created_by_org_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'This event is not associated with an organization'
+            });
+        }
+        
+        // Check if user is a member of the organization
+        const { data: membership, error: membershipError } = await supabase
+            .from('organization_memberships')
+            .select('*')
+            .eq('user_id', user_id)
+            .eq('org_id', event.created_by_org_id)
+            .single();
+        
+        // PGRST116 is the "not found" error code from Supabase
+        if (membershipError && membershipError.code !== 'PGRST116') {
+            console.error('Error checking membership:', membershipError);
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to check membership',
+                error: membershipError.message
+            });
+        }
+        
+        if (!membership) {
+            return res.status(403).json({
+                success: false,
+                message: 'You must be a member of the organization to RSVP to this event'
+            });
+        }
+        
+        // Check if RSVP already exists
+        const { data: existingRsvp, error: checkError } = await supabase
+            .from('event_rsvps')
+            .select('*')
+            .eq('event_id', id)
+            .eq('user_id', user_id)
+            .single();
+        
+        // PGRST116 is the "not found" error code from Supabase - this is expected if no RSVP exists
+        if (checkError && checkError.code !== 'PGRST116') {
+            console.error('Error checking existing RSVP:', checkError);
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to check existing RSVP',
+                error: checkError.message
+            });
+        }
+        
+        // If status is 'going' (which maps to 'confirmed'), check attendee cap
+        if (status === 'going' && event.attendee_cap) {
+            // Count current 'confirmed' RSVPs (using database format)
+            const { count, error: countError } = await supabase
+                .from('event_rsvps')
+                .select('*', { count: 'exact', head: true })
+                .eq('event_id', id)
+                .eq('status', 'confirmed');
+            
+            if (countError) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Failed to check attendee count',
+                    error: countError.message
+                });
+            }
+            
+            // If user already has a 'confirmed' RSVP, they're already counted, so no need to check cap
+            // Only check cap if user is changing from a different status to 'going' or creating new RSVP
+            const isAlreadyConfirmed = existingRsvp && existingRsvp.status === 'confirmed';
+            
+            if (!isAlreadyConfirmed && (count || 0) >= event.attendee_cap) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Event has reached its attendee capacity'
+                });
+            }
+        }
+        
+        if (existingRsvp) {
+            // Update existing RSVP
+            const { data: updatedRsvp, error: updateError } = await supabase
+                .from('event_rsvps')
+                .update({
+                    status: dbStatus,
+                    rsvp_time: new Date().toISOString()
+                })
+                .eq('rsvp_id', existingRsvp.rsvp_id)
+                .select()
+                .single();
+            
+            if (updateError) {
+                console.error('Error updating RSVP:', updateError);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Failed to update RSVP',
+                    error: updateError.message
+                });
+            }
+            
+            console.log('RSVP updated successfully:', updatedRsvp);
+            
+            // Normalize status value for frontend
+            const statusMap = {
+                'confirmed': 'going',
+                'pending': 'maybe',
+                'cancelled': 'not_going'
+            };
+            const normalizedRsvp = {
+                ...updatedRsvp,
+                status: statusMap[updatedRsvp.status] || updatedRsvp.status
+            };
+            
+            return res.json({
+                success: true,
+                message: 'RSVP updated successfully',
+                rsvp: normalizedRsvp
+            });
+        } else {
+            // Create new RSVP
+            const { data: newRsvp, error: insertError } = await supabase
+                .from('event_rsvps')
+                .insert({
+                    event_id: parseInt(id),
+                    user_id: user_id,
+                    status: dbStatus,
+                    rsvp_time: new Date().toISOString()
+                })
+                .select()
+                .single();
+            
+            if (insertError) {
+                console.error('Error creating RSVP:', insertError);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Failed to create RSVP',
+                    error: insertError.message
+                });
+            }
+            
+            console.log('RSVP created successfully:', newRsvp);
+            
+            // Normalize status value for frontend
+            const statusMap = {
+                'confirmed': 'going',
+                'pending': 'maybe',
+                'cancelled': 'not_going'
+            };
+            const normalizedRsvp = {
+                ...newRsvp,
+                status: statusMap[newRsvp.status] || newRsvp.status
+            };
+            
+            return res.status(201).json({
+                success: true,
+                message: 'RSVP created successfully',
+                rsvp: normalizedRsvp
+            });
+        }
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while processing the RSVP',
+            error: err.message
+        });
+    }
+});
+
+// GET /api/events/:id/rsvps - Get all RSVPs for an event
+router.get('/:id/rsvps', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+    
+    if (!user_id) {
+        return res.status(401).json({
+            success: false,
+            message: 'User not authenticated'
+        });
+    }
+    
+    try {
+        // First, get the event to check organization
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('created_by_org_id')
+            .eq('event_id', id)
+            .single();
+        
+        if (eventError || !event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // Check if event has an organization
+        if (!event.created_by_org_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'This event is not associated with an organization'
+            });
+        }
+        
+        // Check if user is a member of the organization
+        const { data: membership, error: membershipError } = await supabase
+            .from('organization_memberships')
+            .select('*')
+            .eq('user_id', user_id)
+            .eq('org_id', event.created_by_org_id)
+            .single();
+        
+        if (membershipError || !membership) {
+            return res.status(403).json({
+                success: false,
+                message: 'You must be a member of the organization to view RSVPs for this event'
+            });
+        }
+        
+        // Get all RSVPs for the event
+        const { data: rsvps, error: rsvpError } = await supabase
+            .from('event_rsvps')
+            .select('*')
+            .eq('event_id', id)
+            .order('rsvp_time', { ascending: false });
+        
+        if (rsvpError) {
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to fetch RSVPs',
+                error: rsvpError.message
+            });
+        }
+        
+        // Normalize status values for frontend (convert database format to frontend format)
+        const normalizedRsvps = (rsvps || []).map(rsvp => {
+            // Map database values to frontend values
+            const statusMap = {
+                'confirmed': 'going',
+                'pending': 'maybe',
+                'cancelled': 'not_going'
+            };
+            return {
+                ...rsvp,
+                status: statusMap[rsvp.status] || rsvp.status
+            };
+        });
+        
+        return res.json({
+            success: true,
+            rsvps: normalizedRsvps
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while fetching RSVPs',
+            error: err.message
+        });
+    }
+});
+
+// GET /api/events/:id/rsvp - Get the current user's RSVP for an event
+router.get('/:id/rsvp', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+    
+    if (!user_id) {
+        return res.status(401).json({
+            success: false,
+            message: 'User not authenticated'
+        });
+    }
+    
+    try {
+        // Get the user's RSVP for this event
+        const { data: rsvp, error: rsvpError } = await supabase
+            .from('event_rsvps')
+            .select('*')
+            .eq('event_id', id)
+            .eq('user_id', user_id)
+            .single();
+        
+        if (rsvpError && rsvpError.code !== 'PGRST116') { // PGRST116 is "not found" error
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to fetch RSVP',
+                error: rsvpError.message
+            });
+        }
+        
+        // Normalize status value for frontend (convert database format to frontend format)
+        let normalizedRsvp = null;
+        if (rsvp) {
+            // Map database values to frontend values
+            const statusMap = {
+                'confirmed': 'going',
+                'pending': 'maybe',
+                'cancelled': 'not_going'
+            };
+            normalizedRsvp = {
+                ...rsvp,
+                status: statusMap[rsvp.status] || rsvp.status
+            };
+        }
+        
+        return res.json({
+            success: true,
+            rsvp: normalizedRsvp
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while fetching RSVP',
+            error: err.message
+        });
+    }
+});
+
+// DELETE /api/events/:id/rsvp - Cancel/delete an RSVP
+router.delete('/:id/rsvp', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+    
+    if (!user_id) {
+        return res.status(401).json({
+            success: false,
+            message: 'User not authenticated'
+        });
+    }
+    
+    try {
+        // Check if RSVP exists
+        const { data: rsvp, error: rsvpError } = await supabase
+            .from('event_rsvps')
+            .select('*')
+            .eq('event_id', id)
+            .eq('user_id', user_id)
+            .single();
+        
+        if (rsvpError || !rsvp) {
+            return res.status(404).json({
+                success: false,
+                message: 'RSVP not found'
+            });
+        }
+        
+        // Delete the RSVP
+        const { error: deleteError } = await supabase
+            .from('event_rsvps')
+            .delete()
+            .eq('rsvp_id', rsvp.rsvp_id);
+        
+        if (deleteError) {
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to delete RSVP',
+                error: deleteError.message
+            });
+        }
+        
+        return res.json({
+            success: true,
+            message: 'RSVP cancelled successfully'
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while cancelling the RSVP',
+            error: err.message
+        });
+    }
+});
+
 module.exports = router;
 

@@ -1,6 +1,8 @@
 // Event detail page logic
 
 let currentEventId = null;
+let currentEvent = null;
+let currentRsvp = null;
 
 // Get event ID from URL
 function getEventIdFromUrl() {
@@ -50,6 +52,7 @@ async function loadEvent() {
         }
         
         const event = data.event;
+        currentEvent = event;
         
         // Update page content
         if (document.getElementById('event-title')) {
@@ -139,6 +142,16 @@ async function loadEvent() {
         if (eventDetail) eventDetail.classList.remove('hidden');
         if (notFound) notFound.classList.add('hidden');
         
+        // Load RSVP information only if event has an organization
+        const rsvpSection = document.getElementById('rsvp-section');
+        if (event.created_by_org_id) {
+            if (rsvpSection) rsvpSection.classList.remove('hidden');
+            await loadRsvp();
+            await loadRsvpCounts();
+        } else {
+            if (rsvpSection) rsvpSection.classList.add('hidden');
+        }
+        
     } catch (error) {
         console.error('Error loading event:', error);
         showError('An error occurred while loading the event');
@@ -180,6 +193,251 @@ function handleBack() {
     }
 }
 
+// Load current user's RSVP
+async function loadRsvp() {
+    if (!currentEventId) return;
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        // Hide RSVP section if not authenticated
+        const rsvpSection = document.getElementById('rsvp-section');
+        if (rsvpSection) rsvpSection.classList.add('hidden');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/events/${currentEventId}/rsvp`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            currentRsvp = data.rsvp;
+            updateRsvpUI();
+        } else {
+            currentRsvp = null;
+            updateRsvpUI();
+        }
+    } catch (error) {
+        console.error('Error loading RSVP:', error);
+        currentRsvp = null;
+        updateRsvpUI();
+    }
+}
+
+// Load RSVP counts for the event
+async function loadRsvpCounts() {
+    if (!currentEventId) return;
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    
+    try {
+        const response = await fetch(`/api/events/${currentEventId}/rsvps`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            const rsvps = data.rsvps || [];
+            // Status values are normalized by backend, so use frontend format
+            const counts = {
+                going: rsvps.filter(r => r.status === 'going').length,
+                maybe: rsvps.filter(r => r.status === 'maybe').length,
+                not_going: rsvps.filter(r => r.status === 'not_going').length
+            };
+            updateRsvpCountsUI(counts);
+        }
+    } catch (error) {
+        console.error('Error loading RSVP counts:', error);
+    }
+}
+
+// Update RSVP UI based on current RSVP status
+function updateRsvpUI() {
+    const rsvpStatus = document.getElementById('rsvp-status');
+    const rsvpGoingBtn = document.getElementById('rsvp-going');
+    const rsvpMaybeBtn = document.getElementById('rsvp-maybe');
+    const rsvpNotGoingBtn = document.getElementById('rsvp-not-going');
+    const rsvpCancelBtn = document.getElementById('rsvp-cancel');
+    
+    if (!rsvpStatus) return;
+    
+    // Reset button states
+    if (rsvpGoingBtn) {
+        rsvpGoingBtn.classList.remove('active');
+        rsvpGoingBtn.disabled = false;
+    }
+    if (rsvpMaybeBtn) {
+        rsvpMaybeBtn.classList.remove('active');
+        rsvpMaybeBtn.disabled = false;
+    }
+    if (rsvpNotGoingBtn) {
+        rsvpNotGoingBtn.classList.remove('active');
+        rsvpNotGoingBtn.disabled = false;
+    }
+    if (rsvpCancelBtn) {
+        rsvpCancelBtn.classList.add('hidden');
+    }
+    
+    if (currentRsvp) {
+        // Show current RSVP status
+        const statusText = {
+            'going': 'You are going to this event',
+            'maybe': 'You might attend this event',
+            'not_going': 'You are not going to this event'
+        };
+        rsvpStatus.innerHTML = `<p class="rsvp-status-text">${statusText[currentRsvp.status] || 'You have RSVPed'}</p>`;
+        
+        // Highlight active button
+        if (currentRsvp.status === 'going' && rsvpGoingBtn) {
+            rsvpGoingBtn.classList.add('active');
+        } else if (currentRsvp.status === 'maybe' && rsvpMaybeBtn) {
+            rsvpMaybeBtn.classList.add('active');
+        } else if (currentRsvp.status === 'not_going' && rsvpNotGoingBtn) {
+            rsvpNotGoingBtn.classList.add('active');
+        }
+        
+        // Show cancel button
+        if (rsvpCancelBtn) {
+            rsvpCancelBtn.classList.remove('hidden');
+        }
+    } else {
+        rsvpStatus.innerHTML = '<p class="rsvp-status-text">You haven\'t RSVPed yet</p>';
+    }
+}
+
+// Update RSVP counts UI
+function updateRsvpCountsUI(counts) {
+    const rsvpCounts = document.getElementById('rsvp-counts');
+    if (!rsvpCounts) return;
+    
+    rsvpCounts.innerHTML = `
+        <div class="rsvp-count-item">
+            <span class="rsvp-count-label">Going:</span>
+            <span class="rsvp-count-value">${counts.going}</span>
+        </div>
+        <div class="rsvp-count-item">
+            <span class="rsvp-count-label">Maybe:</span>
+            <span class="rsvp-count-value">${counts.maybe}</span>
+        </div>
+        <div class="rsvp-count-item">
+            <span class="rsvp-count-label">Not Going:</span>
+            <span class="rsvp-count-value">${counts.not_going}</span>
+        </div>
+    `;
+}
+
+// Handle RSVP button click
+async function handleRsvp(status) {
+    if (!currentEventId) return;
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        showError('You must be logged in to RSVP');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/events/${currentEventId}/rsvp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: status })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            showError(data.message || 'Failed to update RSVP');
+            return;
+        }
+        
+        // Reload RSVP and counts
+        await loadRsvp();
+        await loadRsvpCounts();
+        
+        // Show success message
+        const successMessages = {
+            'going': 'You are now going to this event!',
+            'maybe': 'You marked yourself as maybe attending',
+            'not_going': 'You marked yourself as not going'
+        };
+        showSuccess(successMessages[status] || 'RSVP updated successfully');
+        
+    } catch (error) {
+        console.error('Error updating RSVP:', error);
+        showError('An error occurred while updating your RSVP');
+    }
+}
+
+// Handle cancel RSVP
+async function handleCancelRsvp() {
+    if (!currentEventId) return;
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        showError('You must be logged in to cancel RSVP');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to cancel your RSVP?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/events/${currentEventId}/rsvp`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            showError(data.message || 'Failed to cancel RSVP');
+            return;
+        }
+        
+        // Reload RSVP and counts
+        currentRsvp = null;
+        await loadRsvp();
+        await loadRsvpCounts();
+        
+        showSuccess('RSVP cancelled successfully');
+        
+    } catch (error) {
+        console.error('Error cancelling RSVP:', error);
+        showError('An error occurred while cancelling your RSVP');
+    }
+}
+
+// Show success message
+function showSuccess(message) {
+    const errorBanner = document.getElementById('error-banner');
+    const errorMessage = document.getElementById('error-message');
+    if (errorBanner && errorMessage) {
+        errorMessage.textContent = message;
+        errorBanner.classList.remove('hidden');
+        errorBanner.style.backgroundColor = '#4caf50';
+        setTimeout(() => {
+            if (errorBanner) {
+                errorBanner.classList.add('hidden');
+                errorBanner.style.backgroundColor = '';
+            }
+        }, 3000);
+    }
+}
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadEvent();
@@ -188,6 +446,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const backBtn = document.getElementById('back-btn');
     if (backBtn) {
         backBtn.addEventListener('click', handleBack);
+    }
+    
+    // RSVP button event listeners
+    const rsvpGoingBtn = document.getElementById('rsvp-going');
+    const rsvpMaybeBtn = document.getElementById('rsvp-maybe');
+    const rsvpNotGoingBtn = document.getElementById('rsvp-not-going');
+    const rsvpCancelBtn = document.getElementById('rsvp-cancel');
+    
+    if (rsvpGoingBtn) {
+        rsvpGoingBtn.addEventListener('click', () => handleRsvp('going'));
+    }
+    if (rsvpMaybeBtn) {
+        rsvpMaybeBtn.addEventListener('click', () => handleRsvp('maybe'));
+    }
+    if (rsvpNotGoingBtn) {
+        rsvpNotGoingBtn.addEventListener('click', () => handleRsvp('not_going'));
+    }
+    if (rsvpCancelBtn) {
+        rsvpCancelBtn.addEventListener('click', handleCancelRsvp);
     }
 });
 
