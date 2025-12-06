@@ -297,6 +297,105 @@ router.delete('/:id', authenticateUser, async (req, res) => {
     }
 });
 
+// PUT /api/organizations/:id - Update an organization (admin only)
+router.put('/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+    
+    if (!user_id) {
+        return res.status(401).json({
+            success: false,
+            message: 'User not authenticated'
+        });
+    }
+    
+    try {
+        // First, verify the user is an admin of this organization
+        const { data: membership, error: membershipError } = await supabase
+            .from('organization_memberships')
+            .select('*')
+            .eq('user_id', user_id)
+            .eq('org_id', id)
+            .eq('role', 'admin')
+            .single();
+        
+        if (membershipError || !membership) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only organization admins can update organizations'
+            });
+        }
+        
+        // Check if organization exists
+        const { data: existingOrg, error: fetchError } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('org_id', id)
+            .single();
+        
+        if (fetchError || !existingOrg) {
+            return res.status(404).json({
+                success: false,
+                message: 'Organization not found'
+            });
+        }
+        
+        // Prepare update data
+        const updateData = {};
+        const { name, description } = req.body;
+        
+        if (name !== undefined) {
+            if (!name || name.trim() === '') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Organization name cannot be empty'
+                });
+            }
+            updateData.name = name.trim();
+        }
+        
+        if (description !== undefined) {
+            updateData.description = description ? description.trim() : null;
+        }
+        
+        // If no fields to update
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No fields to update'
+            });
+        }
+        
+        // Update the organization
+        const { data: updatedOrg, error: updateError } = await supabase
+            .from('organizations')
+            .update(updateData)
+            .eq('org_id', id)
+            .select()
+            .single();
+        
+        if (updateError) {
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to update organization',
+                error: updateError.message
+            });
+        }
+        
+        return res.json({
+            success: true,
+            message: 'Organization updated successfully',
+            organization: updatedOrg
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while updating the organization',
+            error: err.message
+        });
+    }
+});
+
 // GET /api/organizations/:id - Get a specific organization by org_id
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
@@ -316,9 +415,20 @@ router.get('/:id', async (req, res) => {
             });
         }
 
+        // Get member count
+        const { count, error: countError } = await supabase
+            .from('organization_memberships')
+            .select('*', { count: 'exact', head: true })
+            .eq('org_id', id);
+
+        const organization = {
+            ...data,
+            member_count: countError ? 0 : (count || 0)
+        };
+
         return res.json({
             success: true,
-            organization: data
+            organization: organization
         });
     } catch (err) {
         return res.status(500).json({

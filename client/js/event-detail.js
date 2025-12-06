@@ -3,6 +3,7 @@
 let currentEventId = null;
 let currentEvent = null;
 let currentRsvp = null;
+let canDeleteEvent = false;
 
 // Get event ID from URL
 function getEventIdFromUrl() {
@@ -53,6 +54,9 @@ async function loadEvent() {
         
         const event = data.event;
         currentEvent = event;
+        
+        // Check if user can delete this event
+        await checkDeletePermission(event);
         
         // Update page content
         if (document.getElementById('event-title')) {
@@ -180,6 +184,129 @@ function showError(message) {
         setTimeout(() => {
             if (errorBanner) errorBanner.classList.add('hidden');
         }, 5000);
+    }
+}
+
+// Check if user can delete this event
+async function checkDeletePermission(event) {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        canDeleteEvent = false;
+        updateDeleteButton();
+        return;
+    }
+    
+    try {
+        // Get current user profile to get user ID
+        const response = await fetch('/api/auth/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const userId = data.user?.id;
+            
+            if (userId) {
+                // Check if user is the creator
+                if (event.created_by_user_id === userId) {
+                    canDeleteEvent = true;
+                } else if (event.created_by_org_id) {
+                    // Check if user is admin of the organization
+                    const orgResponse = await fetch(`/api/memberships/organization/${event.created_by_org_id}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (orgResponse.ok) {
+                        const orgData = await orgResponse.json();
+                        if (orgData.success && orgData.userRole === 'admin') {
+                            canDeleteEvent = true;
+                        } else {
+                            canDeleteEvent = false;
+                        }
+                    } else {
+                        canDeleteEvent = false;
+                    }
+                } else {
+                    canDeleteEvent = false;
+                }
+            } else {
+                canDeleteEvent = false;
+            }
+        } else {
+            canDeleteEvent = false;
+        }
+    } catch (error) {
+        console.error('Error checking delete permission:', error);
+        canDeleteEvent = false;
+    }
+    
+    updateDeleteButton();
+}
+
+// Update delete button visibility
+function updateDeleteButton() {
+    const deleteBtn = document.getElementById('delete-event-btn');
+    if (deleteBtn) {
+        if (canDeleteEvent) {
+            deleteBtn.classList.remove('hidden');
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
+    }
+}
+
+// Handle delete event
+async function handleDeleteEvent() {
+    if (!currentEventId || !currentEvent) return;
+    
+    const eventTitle = currentEvent.title || 'this event';
+    if (!confirm(`Are you sure you want to delete "${eventTitle}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        showError('You must be logged in to delete an event');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/events/${currentEventId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            const errorMsg = data.message || data.error || 'Failed to delete event';
+            showError(errorMsg);
+            return;
+        }
+        
+        // Success - redirect to organization page if event had an org, otherwise to organizations list
+        showError('Event deleted successfully!');
+        if (currentEvent.created_by_org_id) {
+            setTimeout(() => {
+                window.location.href = `/organizations/${currentEvent.created_by_org_id}`;
+            }, 1000);
+        } else {
+            setTimeout(() => {
+                window.location.href = '/protected/organizations';
+            }, 1000);
+        }
+        
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        showError(`An error occurred while deleting the event: ${error.message}`);
     }
 }
 
@@ -393,6 +520,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const backBtn = document.getElementById('back-btn');
     if (backBtn) {
         backBtn.addEventListener('click', handleBack);
+    }
+    
+    // Delete event button event listener
+    const deleteEventBtn = document.getElementById('delete-event-btn');
+    if (deleteEventBtn) {
+        deleteEventBtn.addEventListener('click', handleDeleteEvent);
     }
     
     // RSVP button event listeners

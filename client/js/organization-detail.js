@@ -2,6 +2,7 @@
 
 let currentOrgId = null;
 let userRole = null;
+let currentOrg = null;
 
 // Get organization ID from URL
 function getOrgIdFromUrl() {
@@ -39,6 +40,7 @@ async function loadOrganization() {
         }
         
         const org = data.organization;
+        currentOrg = org; // Store current org data
         
         // Update page content
         if (document.getElementById('org-title')) {
@@ -47,6 +49,11 @@ async function loadOrganization() {
         
         if (document.getElementById('org-description')) {
             document.getElementById('org-description').textContent = org.description || 'No description available.';
+        }
+        
+        // Update member count
+        if (document.getElementById('org-member-count')) {
+            document.getElementById('org-member-count').textContent = org.member_count || 0;
         }
         
         // Check user's role in organization
@@ -116,9 +123,18 @@ async function checkUserRole(orgId) {
             if (result.success && result.userRole) {
                 userRole = result.userRole;
                 
-                // Only show "Create Event" and "Delete Organization" buttons if user is admin
+                // Only show "Edit Organization", "Create Event", and "Delete Organization" buttons if user is admin
+                const editOrgBtn = document.getElementById('edit-org-btn');
                 const createEventBtn = document.getElementById('create-event-btn');
                 const deleteOrgBtn = document.getElementById('delete-org-btn');
+                
+                if (editOrgBtn) {
+                    if (userRole === 'admin') {
+                        editOrgBtn.classList.remove('hidden');
+                    } else {
+                        editOrgBtn.classList.add('hidden');
+                    }
+                }
                 if (createEventBtn) {
                     if (userRole === 'admin') {
                         createEventBtn.classList.remove('hidden');
@@ -464,6 +480,156 @@ async function handleCreateEvent(event) {
     }
 }
 
+// Open edit organization modal
+function openEditOrgModal() {
+    if (!currentOrg) return;
+    
+    const modal = document.getElementById('edit-org-modal');
+    const nameInput = document.getElementById('edit-org-name');
+    const descInput = document.getElementById('edit-org-description');
+    
+    if (modal && nameInput && descInput) {
+        // Populate form with current values
+        nameInput.value = currentOrg.name || '';
+        descInput.value = currentOrg.description || '';
+        
+        // Clear any previous errors
+        const nameError = document.getElementById('edit-name-error');
+        const descError = document.getElementById('edit-description-error');
+        if (nameError) nameError.textContent = '';
+        if (descError) descError.textContent = '';
+        
+        modal.classList.remove('hidden');
+    }
+}
+
+// Close edit organization modal
+function closeEditOrgModal() {
+    const modal = document.getElementById('edit-org-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// Handle edit organization form submission
+async function handleEditOrganization(event) {
+    event.preventDefault();
+    
+    if (!currentOrgId || !currentOrg) return;
+    
+    const nameInput = document.getElementById('edit-org-name');
+    const descInput = document.getElementById('edit-org-description');
+    const nameError = document.getElementById('edit-name-error');
+    const descError = document.getElementById('edit-description-error');
+    
+    if (nameError) nameError.textContent = '';
+    if (descError) descError.textContent = '';
+    
+    const name = nameInput?.value.trim();
+    const description = descInput?.value.trim();
+    
+    if (!name) {
+        if (nameError) nameError.textContent = 'Organization name is required';
+        return;
+    }
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        showError('You must be logged in to update an organization');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/organizations/${currentOrgId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                description: description || null
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            const errorMsg = data.message || data.error || 'Failed to update organization';
+            if (data.errors) {
+                if (data.errors.name && nameError) {
+                    nameError.textContent = data.errors.name;
+                }
+                if (data.errors.description && descError) {
+                    descError.textContent = data.errors.description;
+                }
+            }
+            showError(errorMsg);
+            return;
+        }
+        
+        // Success - update current org data and refresh display
+        currentOrg = data.organization;
+        if (document.getElementById('org-title')) {
+            document.getElementById('org-title').textContent = data.organization.name || 'Unnamed Organization';
+        }
+        if (document.getElementById('org-description')) {
+            document.getElementById('org-description').textContent = data.organization.description || 'No description available.';
+        }
+        
+        closeEditOrgModal();
+        showError('Organization updated successfully!');
+        
+    } catch (error) {
+        console.error('Error updating organization:', error);
+        showError(`An error occurred while updating the organization: ${error.message}`);
+    }
+}
+
+// Handle delete event
+async function handleDeleteEvent(eventId) {
+    if (!eventId) return;
+    
+    const eventTitle = document.querySelector(`[data-event-id="${eventId}"]`)?.closest('.event-card')?.querySelector('h4')?.textContent || 'this event';
+    if (!confirm(`Are you sure you want to delete "${eventTitle}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        showError('You must be logged in to delete an event');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/events/${eventId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            const errorMsg = data.message || data.error || 'Failed to delete event';
+            showError(errorMsg);
+            return;
+        }
+        
+        // Success - reload events
+        showError('Event deleted successfully!');
+        await loadEvents(currentOrgId);
+        
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        showError(`An error occurred while deleting the event: ${error.message}`);
+    }
+}
+
 // Handle delete organization
 async function handleDeleteOrganization() {
     if (!currentOrgId) return;
@@ -527,11 +693,34 @@ document.addEventListener('DOMContentLoaded', function() {
     loadOrganization();
     
     // Modal event listeners
+    const editOrgBtn = document.getElementById('edit-org-btn');
     const createEventBtn = document.getElementById('create-event-btn');
     const deleteOrgBtn = document.getElementById('delete-org-btn');
+    const closeEditOrgModalBtn = document.getElementById('close-edit-org-modal');
+    const cancelEditOrgBtn = document.getElementById('cancel-edit-org');
+    const editOrgForm = document.getElementById('edit-org-form');
     const closeEventModalBtn = document.getElementById('close-event-modal');
     const cancelEventBtn = document.getElementById('cancel-event');
     const form = document.getElementById('create-event-form');
+    
+    if (editOrgBtn) {
+        editOrgBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openEditOrgModal();
+        });
+    }
+    
+    if (closeEditOrgModalBtn) {
+        closeEditOrgModalBtn.addEventListener('click', closeEditOrgModal);
+    }
+    
+    if (cancelEditOrgBtn) {
+        cancelEditOrgBtn.addEventListener('click', closeEditOrgModal);
+    }
+    
+    if (editOrgForm) {
+        editOrgForm.addEventListener('submit', handleEditOrganization);
+    }
     
     if (createEventBtn) {
         createEventBtn.addEventListener('click', openEventModal);
