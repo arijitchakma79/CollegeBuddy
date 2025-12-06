@@ -23,13 +23,23 @@ let allOrganizations = [];
 // Display all organizations
 function displayOrganizations(organizations) {
     const organizationsList = document.getElementById('organizations-list');
+    const notFound = document.getElementById('not-found');
+    const loading = document.getElementById('loading');
+    
+    // Hide loading
+    if (loading) loading.classList.add('hidden');
     
     if (!organizations || organizations.length === 0) {
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('not-found').classList.remove('hidden');
+        // No organizations found
+        if (organizationsList) organizationsList.classList.add('hidden');
+        if (notFound) notFound.classList.remove('hidden');
         return;
     }
 
+    // Show organizations list and hide not-found
+    if (organizationsList) organizationsList.classList.remove('hidden');
+    if (notFound) notFound.classList.add('hidden');
+    
     organizationsList.innerHTML = '';
     
     organizations.forEach(org => {

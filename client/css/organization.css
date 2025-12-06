@@ -223,6 +223,51 @@ body {
   opacity: 1;
 }
 
+/* Search Container - Enhanced Styling */
+.search-container {
+  position: relative;
+  margin: 1.5rem 0 2rem 0;
+  max-width: 500px;
+}
+
+.search-container::before {
+  content: '🔍';
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  background-color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+  background-color: #fff;
+}
+
+.search-bar::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.search-bar:hover {
+  border-color: #b0b0b0;
+}
+
 /* Organizations list */
 .organizations-list {
   display: flex;
