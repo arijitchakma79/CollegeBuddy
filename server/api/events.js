@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const supabase = require("../services/supabaseClient");
 const { authenticateUser } = require("../middleware/auth");
+const { sendRsvpConfirmationEmail } = require("../services/emailService");
 
 
 // POST /api/events/create - Create a new event
@@ -138,7 +139,7 @@ router.post('/create', authenticateUser, async (req, res) => {
 // GET /api/events - Get events with optional filters
 router.get('/', async (req, res) => {
     try {
-        const { org_id, user_id, restricted } = req.query;
+        const { org_id, user_id, restricted, include_rsvp_stats } = req.query;
         
         let query = supabase
             .from('events')
@@ -172,9 +173,65 @@ router.get('/', async (req, res) => {
             });
         }
 
+        const events = data || [];
+
+        // If include_rsvp_stats is true, add RSVP statistics to each event
+        if (include_rsvp_stats === 'true') {
+            const eventsWithStats = await Promise.all(
+                events.map(async (event) => {
+                    try {
+                        // Get RSVP counts for each status
+                        const { count: goingCount } = await supabase
+                            .from('event_rsvps')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('event_id', event.event_id)
+                            .eq('status', 'confirmed');
+                        
+                        const { count: maybeCount } = await supabase
+                            .from('event_rsvps')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('event_id', event.event_id)
+                            .eq('status', 'pending');
+                        
+                        const { count: notGoingCount } = await supabase
+                            .from('event_rsvps')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('event_id', event.event_id)
+                            .eq('status', 'cancelled');
+                        
+                        return {
+                            ...event,
+                            rsvp_stats: {
+                                going: goingCount || 0,
+                                maybe: maybeCount || 0,
+                                not_going: notGoingCount || 0,
+                                total: (goingCount || 0) + (maybeCount || 0) + (notGoingCount || 0)
+                            }
+                        };
+                    } catch (err) {
+                        console.error(`Error fetching RSVP stats for event ${event.event_id}:`, err);
+                        return {
+                            ...event,
+                            rsvp_stats: {
+                                going: 0,
+                                maybe: 0,
+                                not_going: 0,
+                                total: 0
+                            }
+                        };
+                    }
+                })
+            );
+            
+            return res.json({
+                success: true,
+                events: eventsWithStats
+            });
+        }
+
         return res.json({
             success: true,
-            events: data || []
+            events: events
         });
     } catch (err) {
         return res.status(500).json({
@@ -188,6 +245,7 @@ router.get('/', async (req, res) => {
 // GET /api/events/:id - Get a specific event by event_id
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
+    const { include_rsvp_stats } = req.query;
     
     try {
         const { data, error } = await supabase
@@ -204,9 +262,56 @@ router.get('/:id', async (req, res) => {
             });
         }
 
+        let event = data;
+
+        // If include_rsvp_stats is true, add RSVP statistics
+        if (include_rsvp_stats === 'true') {
+            try {
+                // Get RSVP counts for each status
+                const { count: goingCount } = await supabase
+                    .from('event_rsvps')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('event_id', id)
+                    .eq('status', 'confirmed');
+                
+                const { count: maybeCount } = await supabase
+                    .from('event_rsvps')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('event_id', id)
+                    .eq('status', 'pending');
+                
+                const { count: notGoingCount } = await supabase
+                    .from('event_rsvps')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('event_id', id)
+                    .eq('status', 'cancelled');
+                
+                event = {
+                    ...event,
+                    rsvp_stats: {
+                        going: goingCount || 0,
+                        maybe: maybeCount || 0,
+                        not_going: notGoingCount || 0,
+                        total: (goingCount || 0) + (maybeCount || 0) + (notGoingCount || 0)
+                    }
+                };
+            } catch (err) {
+                console.error(`Error fetching RSVP stats for event ${id}:`, err);
+                event = {
+                    ...event,
+                    rsvp_stats: {
+                        going: 0,
+                        maybe: 0,
+                        not_going: 0,
+                        total: 0
+                    }
+                };
+            }
+        }
+
         return res.json({
             success: true,
-            event: data
+            event: event
         });
     } catch (err) {
         return res.status(500).json({
@@ -591,6 +696,33 @@ router.post('/:id/rsvp', authenticateUser, async (req, res) => {
                 status: statusMap[updatedRsvp.status] || updatedRsvp.status
             };
             
+            // Send confirmation email (don't fail the request if email fails)
+            try {
+                const userEmail = req.user?.email;
+                const userName = req.user?.user_metadata?.fullName;
+                if (userEmail) {
+                    // Construct event URL
+                    const protocol = req.protocol || (req.get('x-forwarded-proto') || 'http');
+                    const host = req.get('host') || 'localhost:3000';
+                    const eventUrl = `${protocol}://${host}/events/${id}`;
+                    
+                    await sendRsvpConfirmationEmail({
+                        userEmail: userEmail,
+                        userName: userName,
+                        eventTitle: event.title || 'Untitled Event',
+                        eventDescription: event.description,
+                        eventLocation: event.location,
+                        eventStartTime: event.start_time,
+                        eventEndTime: event.end_time,
+                        rsvpStatus: status,
+                        eventUrl: eventUrl
+                    });
+                }
+            } catch (emailError) {
+                console.error('Error sending RSVP confirmation email:', emailError);
+                // Don't fail the request if email fails
+            }
+            
             return res.json({
                 success: true,
                 message: 'RSVP updated successfully',
@@ -630,6 +762,33 @@ router.post('/:id/rsvp', authenticateUser, async (req, res) => {
                 ...newRsvp,
                 status: statusMap[newRsvp.status] || newRsvp.status
             };
+            
+            // Send confirmation email (don't fail the request if email fails)
+            try {
+                const userEmail = req.user?.email;
+                const userName = req.user?.user_metadata?.fullName;
+                if (userEmail) {
+                    // Construct event URL
+                    const protocol = req.protocol || (req.get('x-forwarded-proto') || 'http');
+                    const host = req.get('host') || 'localhost:3000';
+                    const eventUrl = `${protocol}://${host}/events/${id}`;
+                    
+                    await sendRsvpConfirmationEmail({
+                        userEmail: userEmail,
+                        userName: userName,
+                        eventTitle: event.title || 'Untitled Event',
+                        eventDescription: event.description,
+                        eventLocation: event.location,
+                        eventStartTime: event.start_time,
+                        eventEndTime: event.end_time,
+                        rsvpStatus: status,
+                        eventUrl: eventUrl
+                    });
+                }
+            } catch (emailError) {
+                console.error('Error sending RSVP confirmation email:', emailError);
+                // Don't fail the request if email fails
+            }
             
             return res.status(201).json({
                 success: true,
@@ -845,6 +1004,78 @@ router.delete('/:id/rsvp', authenticateUser, async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'An error occurred while cancelling the RSVP',
+            error: err.message
+        });
+    }
+});
+
+// GET /api/events/:id/rsvp-stats - Get RSVP statistics for an event
+router.get('/:id/rsvp-stats', async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+        // Verify event exists and get attendee_cap
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('event_id, attendee_cap')
+            .eq('event_id', id)
+            .single();
+        
+        if (eventError || !event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // Get RSVP counts for each status
+        const [goingResult, maybeResult, notGoingResult] = await Promise.all([
+            supabase
+                .from('event_rsvps')
+                .select('*', { count: 'exact', head: true })
+                .eq('event_id', id)
+                .eq('status', 'confirmed'),
+            supabase
+                .from('event_rsvps')
+                .select('*', { count: 'exact', head: true })
+                .eq('event_id', id)
+                .eq('status', 'pending'),
+            supabase
+                .from('event_rsvps')
+                .select('*', { count: 'exact', head: true })
+                .eq('event_id', id)
+                .eq('status', 'cancelled')
+        ]);
+        
+        const goingCount = goingResult.count || 0;
+        const maybeCount = maybeResult.count || 0;
+        const notGoingCount = notGoingResult.count || 0;
+        const total = goingCount + maybeCount + notGoingCount;
+        
+        // Calculate availability if event has attendee cap
+        let availability = null;
+        if (event.attendee_cap) {
+            availability = {
+                available: Math.max(0, event.attendee_cap - goingCount),
+                total: event.attendee_cap,
+                filled: goingCount
+            };
+        }
+        
+        return res.json({
+            success: true,
+            stats: {
+                going: goingCount,
+                maybe: maybeCount,
+                not_going: notGoingCount,
+                total: total,
+                availability: availability
+            }
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while fetching RSVP statistics',
             error: err.message
         });
     }
