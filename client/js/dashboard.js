@@ -58,11 +58,19 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Token is valid, load user data
         const user = result.user;
-        
+
+        // ⭐ ADD THIS — STORE USER ID FOR PAYMENT FEATURE ⭐
+        if (user.id) {
+            localStorage.setItem("user_id", user.id);
+        }
+
         // Update navbar username on all pages
         const navbarUsername = document.getElementById('navbar-username');
         if (navbarUsername) {
-            navbarUsername.textContent = user.user_metadata?.username || user.user_metadata?.fullName || 'User';
+            navbarUsername.textContent =
+                user.user_metadata?.username ||
+                user.user_metadata?.fullName ||
+                'User';
         }
     } catch (error) {
         console.error("Failed to load profile:", error);

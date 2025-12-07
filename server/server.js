@@ -1,10 +1,10 @@
+require("dotenv").config({ path: "./server/.env" });
+
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 
 const app = express();
-
-// IMPORTANT: Fly.io sets PORT automatically
 const port = process.env.PORT || 3000;
 
 // ---- ROUTE IMPORTS ----
@@ -20,15 +20,29 @@ const organizationsApi = require("./api/organizations");
 const membershipsApi = require("./api/memberships");
 const eventsApi = require("./api/events");
 
+// ⭐ NEW: Stripe Payment Routes
+const paymentsRouter = require("./routes/payments");
+const stripeWebhookRouter = require("./routes/stripeWebHook");
+
 // ---- MIDDLEWARE ----
 app.use(express.json());
 app.use(cookieParser());
 
-// Serve API routes FIRST
+// ---- STRIPE WEBHOOK (must use raw body) ----
+app.use(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhookRouter
+);
+
+// ---- API ROUTES ----
 app.use("/api/auth", authApi);
 app.use("/api/organizations", organizationsApi);
 app.use("/api/memberships", membershipsApi);
 app.use("/api/events", eventsApi);
+
+// ⭐ NEW: Payment API
+app.use("/api/payments", paymentsRouter);
 
 // ---- STATIC FILES ----
 app.use(express.static(path.join(__dirname, "..", "client")));

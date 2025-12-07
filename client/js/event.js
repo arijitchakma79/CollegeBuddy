@@ -25,31 +25,31 @@ async function loadAllEvents(token) {
     const loading = document.getElementById('loading');
     const eventsList = document.getElementById('events-list');
     const eventsEmpty = document.getElementById('events-empty');
-    
+
     if (loading) loading.classList.remove('hidden');
     if (eventsList) eventsList.classList.add('hidden');
     if (eventsEmpty) eventsEmpty.classList.add('hidden');
-    
+
     try {
         const response = await fetch('/api/events', {
             headers: {
                 "Authorization": `Bearer ${token}`
             }
         });
-        
+
         const result = await response.json();
-        
+
         if (loading) loading.classList.add('hidden');
-        
+
         if (!response.ok || !result.success) {
             console.error('Failed to load events:', result.message);
             if (eventsEmpty) eventsEmpty.classList.remove('hidden');
             return;
         }
-        
+
         const events = result.events || [];
         allEvents = events;
-        
+
         if (events.length === 0) {
             if (eventsEmpty) eventsEmpty.classList.remove('hidden');
             if (eventsList) eventsList.classList.add('hidden');
@@ -67,6 +67,7 @@ async function loadAllEvents(token) {
     }
 }
 
+// Search filter
 function applyEventSearch() {
     const input = document.getElementById("searchInputEvent");
     if (!input) return;
@@ -92,21 +93,21 @@ function applyEventSearch() {
 async function displayEvents(events, token) {
     const eventsList = document.getElementById('events-list');
     const eventsEmpty = document.getElementById('events-empty');
-    
+
     if (!eventsList) return;
-    
+
     if (!events || events.length === 0) {
         eventsList.classList.add('hidden');
         if (eventsEmpty) eventsEmpty.classList.remove('hidden');
         return;
     }
-    
+
     if (eventsEmpty) eventsEmpty.classList.add('hidden');
     eventsList.classList.remove('hidden');
-    
+
     eventsList.innerHTML = '';
-    
-    // Load RSVPs for all events in parallel
+
+    // Load RSVPs for all events
     const rsvpPromises = events.map(event => loadEventRsvp(event.event_id, token));
     const rsvps = await Promise.all(rsvpPromises);
     const rsvpMap = {};
@@ -115,35 +116,19 @@ async function displayEvents(events, token) {
             rsvpMap[events[index].event_id] = rsvp;
         }
     });
-    
+
     events.forEach(event => {
         const eventCard = document.createElement('div');
         eventCard.className = 'event-card';
         eventCard.style.cursor = 'pointer';
-        
-        // Add click handler to navigate to event detail page
+
+        // Navigate to event detail page when clicking card
         eventCard.addEventListener('click', () => {
             window.location.href = `/events/${event.event_id}`;
         });
-        
+
         const startDate = new Date(event.start_time);
         const endDate = new Date(event.end_time);
-        const formattedStart = startDate.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        const formattedEnd = endDate.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        // Format date for display
         const dateStr = startDate.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -153,10 +138,9 @@ async function displayEvents(events, token) {
             hour: '2-digit',
             minute: '2-digit'
         });
-        
+
         const price = event.price_cents ? `$${(event.price_cents / 100).toFixed(2)}` : 'Free';
-        
-        // Get RSVP status for this event
+
         const rsvp = rsvpMap[event.event_id];
         let rsvpBadge = '';
         if (rsvp) {
@@ -172,13 +156,17 @@ async function displayEvents(events, token) {
             };
             rsvpBadge = `<span class="rsvp-badge ${statusClasses[rsvp.status] || ''}">${statusLabels[rsvp.status] || 'RSVPed'}</span>`;
         }
-        
-        // Check if event is upcoming or past
+
         const now = new Date();
-        const isUpcoming = startDate > now;
         const isPast = endDate < now;
+        const isUpcoming = startDate > now;
         const eventStatus = isPast ? 'past' : (isUpcoming ? 'upcoming' : 'ongoing');
-        
+
+        // FREE OR PAID BUTTON
+        const actionButtonHTML = event.price_cents > 0
+            ? `<button class="event-pay-btn" onclick="payForEvent(event, ${event.event_id}, '${event.title}', ${event.price_cents}); event.stopPropagation();">Pay ${price}</button>`
+            : `<button class="event-join-btn" onclick="joinEvent(event, ${event.event_id}); event.stopPropagation();">Join Event</button>`;
+
         eventCard.innerHTML = `
             <div class="event-card-header">
                 <div class="event-title-section">
@@ -212,44 +200,89 @@ async function displayEvents(events, token) {
                             <span class="event-info-value ${price === 'Free' ? 'event-free' : ''}">${price}</span>
                         </div>
                     </div>
-                    ${event.attendee_cap ? `
-                    <div class="event-info-item">
-                        <span class="event-icon">👥</span>
-                        <div class="event-info-content">
-                            <span class="event-info-label">Capacity</span>
-                            <span class="event-info-value">${event.attendee_cap} attendees</span>
-                        </div>
-                    </div>
-                    ` : ''}
                 </div>
-                ${event.restricted_to_org ? '<div class="event-restricted-badge">🔒 Organization Members Only</div>' : ''}
+
+                <div class="event-card-actions">
+                    ${actionButtonHTML}
+                </div>
             </div>
         `;
-        
-        // Add status class for styling
+
         if (eventStatus === 'past') {
             eventCard.classList.add('event-past');
         } else if (eventStatus === 'ongoing') {
             eventCard.classList.add('event-ongoing');
         }
-        
+
         eventsList.appendChild(eventCard);
     });
 }
 
-// Load RSVP for a single event
+// JOIN FOR FREE EVENTS
+async function joinEvent(e, event_id) {
+    e.stopPropagation();
+    const token = localStorage.getItem("authToken");
+
+    const res = await fetch("/api/event-attendance/join", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ event_id })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+        alert("You joined the event!");
+    } else {
+        alert(data.message || "Failed to join.");
+    }
+}
+
+// PAY FOR PAID EVENTS
+async function payForEvent(e, event_id, title, price_cents) {
+    e.stopPropagation();
+
+    const token = localStorage.getItem("authToken");
+    const user_id = localStorage.getItem("user_id");
+
+    const res = await fetch("/api/payments/create-checkout-session", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            event_id,
+            title,
+            price_cents,
+            user_id
+        })
+    });
+
+    const data = await res.json();
+
+    if (data.success && data.url) {
+        window.location.href = data.url;
+    } else {
+        alert("Unable to start payment.");
+    }
+}
+
+// Load single RSVP
 async function loadEventRsvp(eventId, token) {
     if (!token) return null;
-    
+
     try {
         const response = await fetch(`/api/events/${eventId}/rsvp`, {
             headers: {
                 "Authorization": `Bearer ${token}`
             }
         });
-        
+
         if (!response.ok) return null;
-        
+
         const result = await response.json();
         return result.rsvp || null;
     } catch (error) {
