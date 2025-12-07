@@ -593,7 +593,7 @@ router.delete('/:id', authenticateUser, async (req, res) => {
         // First, check if the event exists and user has permission
         const { data: existingEvent, error: fetchError } = await supabase
             .from('events')
-            .select('created_by_user_id')
+            .select('created_by_user_id, created_by_org_id')
             .eq('event_id', id)
             .single();
         
@@ -605,11 +605,39 @@ router.delete('/:id', authenticateUser, async (req, res) => {
         }
         
         // Check if user is the creator
-        if (existingEvent.created_by_user_id !== user_id) {
+        let hasPermission = existingEvent.created_by_user_id === user_id;
+        
+        // If event was created by an organization, check if user is an admin of that organization
+        if (!hasPermission && existingEvent.created_by_org_id) {
+            const { data: membership, error: membershipError } = await supabase
+                .from('organization_memberships')
+                .select('role')
+                .eq('user_id', user_id)
+                .eq('org_id', existingEvent.created_by_org_id)
+                .eq('role', 'admin')
+                .single();
+            
+            if (!membershipError && membership) {
+                hasPermission = true;
+            }
+        }
+        
+        if (!hasPermission) {
             return res.status(403).json({
                 success: false,
                 message: 'You do not have permission to delete this event'
             });
+        }
+        
+        // Delete all RSVPs for this event first
+        const { error: rsvpError } = await supabase
+            .from('event_rsvps')
+            .delete()
+            .eq('event_id', id);
+        
+        if (rsvpError) {
+            console.error(`Error deleting RSVPs for event ${id}:`, rsvpError);
+            // Continue with event deletion even if RSVP deletion fails
         }
         
         // Delete the event

@@ -41,10 +41,20 @@
         <div id="org-detail" class="org-detail hidden">
           <div class="org-detail-header">
             <h2 id="org-title">Organization Name</h2>
-            <button id="create-event-btn" class="create-event-btn hidden">Create Event</button>
+            <div class="org-header-actions">
+              <button id="edit-org-btn" class="edit-org-btn hidden">Edit Organization</button>
+              <button id="create-event-btn" class="create-event-btn hidden">Create Event</button>
+              <button id="delete-org-btn" class="delete-org-btn hidden">Delete Organization</button>
+            </div>
           </div>
           
           <div class="org-detail-body">
+            <div class="org-info-section">
+              <div class="org-info-item">
+                <span class="org-info-label">Members:</span>
+                <span id="org-member-count" class="org-info-value">0</span>
+              </div>
+            </div>
             <div class="org-description-section">
               <h3>Description</h3>
               <p id="org-description" class="description">No description available.</p>
@@ -65,6 +75,34 @@
           <p>Organization not found.</p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Edit Organization Modal -->
+  <div id="edit-org-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Organization</h3>
+        <button id="close-edit-org-modal" class="close-btn">&times;</button>
+      </div>
+      <form id="edit-org-form" class="modal-form">
+        <div class="form-group">
+          <label for="edit-org-name">Organization Name <span class="required">*</span></label>
+          <input type="text" id="edit-org-name" name="name" required />
+          <span id="edit-name-error" class="error-message"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="edit-org-description">Description</label>
+          <textarea id="edit-org-description" name="description" rows="4"></textarea>
+          <span id="edit-description-error" class="error-message"></span>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" id="cancel-edit-org" class="btn-cancel">Cancel</button>
+          <button type="submit" class="btn-submit">Save Changes</button>
+        </div>
+      </form>
     </div>
   </div>
 

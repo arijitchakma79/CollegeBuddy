@@ -134,6 +134,23 @@ body {
   padding-bottom: 10px;
 }
 
+.events-section {
+  margin-top: 2rem;
+}
+
+.events-section .events-header {
+  margin-bottom: 1.5rem;
+}
+
+.events-section .events-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #07294D;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
 
 .dashboard-links {
   display: flex;

@@ -15,45 +15,54 @@ function formatDate(dateString) {
     }
 }
 
-// Store user memberships
-let userMemberships = new Set();
+// Store user memberships - Map of org_id to role
+let userMemberships = new Map();
 
 let allOrganizations = [];
 
 // Display all organizations
 function displayOrganizations(organizations) {
     const organizationsList = document.getElementById('organizations-list');
+    const notFound = document.getElementById('not-found');
+    const loading = document.getElementById('loading');
+    
+    // Hide loading
+    if (loading) loading.classList.add('hidden');
     
     if (!organizations || organizations.length === 0) {
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('not-found').classList.remove('hidden');
+        // No organizations found
+        if (organizationsList) organizationsList.classList.add('hidden');
+        if (notFound) notFound.classList.remove('hidden');
         return;
     }
 
+    // Show organizations list and hide not-found
+    if (organizationsList) organizationsList.classList.remove('hidden');
+    if (notFound) notFound.classList.add('hidden');
+    
     organizationsList.innerHTML = '';
     
     organizations.forEach(org => {
-        const isMember = userMemberships.has(org.org_id);
+        const userRole = userMemberships.get(org.org_id);
+        const isMember = userRole !== undefined;
+        const isAdmin = userRole === 'admin';
         const orgCard = document.createElement('div');
         orgCard.className = 'org-card';
         
         let actionButton = '';
         if (isMember) {
-            actionButton = '<button class="org-member-btn" onclick="handleStartOrg(event, ' + org.org_id + ')">Member</button>';
+            const buttonText = isAdmin ? 'Admin' : 'Member';
+            actionButton = `<button class="org-member-btn" onclick="handleStartOrg(event, ${org.org_id})">${buttonText}</button>`;
         } else {
-            actionButton = '<button class="org-join-btn" onclick="handleJoinOrg(event, ' + org.org_id + ')">Join</button>';
+            actionButton = `<button class="org-join-btn" onclick="handleJoinOrg(event, ${org.org_id})">Join</button>`;
         }
         
         orgCard.innerHTML = `
             <div class="org-card-header">
                 <h3>${org.name || 'Unnamed Organization'}</h3>
-                <span class="org-card-id">ID: ${org.org_id || 'N/A'}</span>
             </div>
             <div class="org-card-body">
                 <p class="org-card-description">${org.description || 'No description available.'}</p>
-                <div class="org-card-info">
-                    <span class="org-card-date">Created: ${formatDate(org.created_at)}</span>
-                </div>
                 <div class="org-card-actions">
                     ${actionButton}
                 </div>
@@ -115,10 +124,10 @@ async function loadUserMemberships() {
             if (result.success && result.memberships) {
                 userMemberships.clear();
                 result.memberships.forEach(membership => {
-                    if (membership.org_id) {
-                        userMemberships.add(membership.org_id);
-                    } else if (membership.organizations && membership.organizations.org_id) {
-                        userMemberships.add(membership.organizations.org_id);
+                    const orgId = membership.org_id || (membership.organizations && membership.organizations.org_id);
+                    const role = membership.role || 'member';
+                    if (orgId) {
+                        userMemberships.set(orgId, role);
                     }
                 });
             }

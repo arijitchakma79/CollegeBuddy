@@ -223,6 +223,51 @@ body {
   opacity: 1;
 }
 
+/* Search Container - Enhanced Styling */
+.search-container {
+  position: relative;
+  margin: 1.5rem 0 2rem 0;
+  max-width: 500px;
+}
+
+.search-container::before {
+  content: '🔍';
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.search-bar {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  background-color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+  background-color: #fff;
+}
+
+.search-bar::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.search-bar:hover {
+  border-color: #b0b0b0;
+}
+
 /* Organizations list */
 .organizations-list {
   display: flex;
@@ -327,6 +372,18 @@ body {
   flex: 1;
 }
 
+.org-header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.event-header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
 .create-event-btn {
   background-color: #007bff;
   color: white;
@@ -343,8 +400,69 @@ body {
   background-color: #0056b3;
 }
 
+.delete-org-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-org-btn:hover {
+  background-color: #c82333;
+}
+
+.edit-org-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.edit-org-btn:hover {
+  background-color: #218838;
+}
+
 .org-detail-body {
   margin-top: 2rem;
+}
+
+.org-info-section {
+  background: #f8f9fa;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.org-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.org-info-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.org-info-value {
+  color: #007bff;
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 .org-description-section {
@@ -415,10 +533,41 @@ body {
   border-bottom: 1px solid #e0e0e0;
 }
 
+.event-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.event-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .event-card-header h4 {
   margin: 0;
   font-size: 1.2rem;
   color: #333;
+  flex: 1;
+}
+
+.delete-event-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.delete-event-btn:hover {
+  background-color: #c82333;
 }
 
 .event-card-body {
