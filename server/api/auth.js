@@ -183,4 +183,135 @@ router.post('/logout', (req, res) => {
   });
 });
 
+router.post('/change-password', async (req, res) => {
+  console.log('=== API CALL: POST /api/auth/change-password ===');
+  
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "No authentication token provided"
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All password fields are required"
+      });
+    }
+
+    // Validate new password matches confirmation
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password and confirmation do not match"
+      });
+    }
+
+    // Validate new password meets requirements
+    const { validatePassword } = require("../utils/validate");
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: passwordValidation.error
+      });
+    }
+
+    // Get user to verify current password
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !userData?.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired token"
+      });
+    }
+
+    // Verify current password by attempting to sign in
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: userData.user.email,
+      password: currentPassword
+    });
+
+    if (signInError) {
+      console.error('Sign in error:', signInError);
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect"
+      });
+    }
+
+    if (!signInData || !signInData.session || !signInData.session.access_token) {
+      console.error('No valid session returned from sign in');
+      return res.status(500).json({
+        success: false,
+        message: "Failed to authenticate. Please try again."
+      });
+    }
+
+    // Create a new Supabase client instance
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseUrl = process.env.SUPABASE_PROJECT_URL || process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_API_KEY || process.env.SUPABASE_ANON_KEY;
+    
+    // Create a fresh client instance
+    const supabaseWithSession = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
+    // Set the session first
+    const { data: sessionData, error: sessionError } = await supabaseWithSession.auth.setSession({
+      access_token: signInData.session.access_token,
+      refresh_token: signInData.session.refresh_token
+    });
+
+    if (sessionError) {
+      console.error('Session set error:', sessionError);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to establish session. Please try again.",
+        error: sessionError.message
+      });
+    }
+
+    // Now update the password with the active session
+    const { data: updateData, error: updateError } = await supabaseWithSession.auth.updateUser({
+      password: newPassword
+    });
+
+    if (updateError) {
+      console.error('Update password error:', updateError);
+      return res.status(400).json({
+        success: false,
+        message: "Failed to update password",
+        error: updateError.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Password changed successfully"
+    });
+
+  } catch (err) {
+    console.error('Change password error:', err);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while changing password",
+      error: err.message
+    });
+  }
+});
+
 module.exports = router;
