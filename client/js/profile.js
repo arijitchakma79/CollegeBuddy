@@ -155,7 +155,6 @@ function displayMemberships(memberships) {
             </div>
             <div class="membership-card-body">
                 <p class="membership-description">${org?.description || 'No description available.'}</p>
-                <p class="membership-id">Organization ID: ${orgId || 'N/A'}</p>
             </div>
         `;
         

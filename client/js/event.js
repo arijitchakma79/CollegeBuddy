@@ -10,6 +10,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
+    // Check for payment success/cancel query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    
+    if (paymentStatus === 'success') {
+        showPaymentSuccessMessage();
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === 'cancel') {
+        showPaymentCancelMessage();
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Load events
     await loadAllEvents(token);
 
@@ -19,6 +33,42 @@ document.addEventListener('DOMContentLoaded', async function() {
         searchInput.addEventListener("input", applyEventSearch);
     }
 });
+
+// Show payment success message
+function showPaymentSuccessMessage() {
+    // Create success banner
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background-color: #28a745; color: white; padding: 1rem; margin-bottom: 1rem; border-radius: 6px; text-align: center; font-weight: 600;';
+    banner.textContent = '✅ Payment successful! You can now RSVP to the event.';
+    
+    const pageContent = document.querySelector('.page-content');
+    if (pageContent) {
+        pageContent.insertBefore(banner, pageContent.firstChild);
+        
+        // Remove banner after 5 seconds
+        setTimeout(() => {
+            banner.remove();
+        }, 5000);
+    }
+}
+
+// Show payment cancel message
+function showPaymentCancelMessage() {
+    // Create cancel banner
+    const banner = document.createElement('div');
+    banner.style.cssText = 'background-color: #ffc107; color: #333; padding: 1rem; margin-bottom: 1rem; border-radius: 6px; text-align: center; font-weight: 600;';
+    banner.textContent = '⚠️ Payment was cancelled. Please complete payment to RSVP to paid events.';
+    
+    const pageContent = document.querySelector('.page-content');
+    if (pageContent) {
+        pageContent.insertBefore(banner, pageContent.firstChild);
+        
+        // Remove banner after 5 seconds
+        setTimeout(() => {
+            banner.remove();
+        }, 5000);
+    }
+}
 
 // Load all events
 async function loadAllEvents(token) {

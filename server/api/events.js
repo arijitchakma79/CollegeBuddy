@@ -752,6 +752,34 @@ router.post('/:id/rsvp', authenticateUser, async (req, res) => {
             });
         }
         
+        // Check if event requires payment and if user has paid
+        if (event.price_cents > 0) {
+            // Check if user has an RSVP with paid = true
+            const { data: rsvp, error: rsvpError } = await supabase
+                .from('event_rsvps')
+                .select('paid, paid_at')
+                .eq('event_id', id)
+                .eq('user_id', user_id)
+                .single();
+            
+            if (rsvpError && rsvpError.code !== 'PGRST116') {
+                console.error('Error checking payment:', rsvpError);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Failed to check payment status',
+                    error: rsvpError.message
+                });
+            }
+            
+            // If no RSVP or RSVP exists but not paid
+            if (!rsvp || !rsvp.paid) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'You must pay for this event before you can RSVP'
+                });
+            }
+        }
+        
         // Check if RSVP already exists
         const { data: existingRsvp, error: checkError } = await supabase
             .from('event_rsvps')
@@ -1086,6 +1114,72 @@ router.get('/:id/rsvp', authenticateUser, async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'An error occurred while fetching RSVP',
+            error: err.message
+        });
+    }
+});
+
+// GET /api/events/:id/payment-status - Check if user has paid for an event
+router.get('/:id/payment-status', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+    
+    if (!user_id) {
+        return res.status(401).json({
+            success: false,
+            message: 'User not authenticated'
+        });
+    }
+    
+    try {
+        // First, get the event to check if it requires payment
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('price_cents')
+            .eq('event_id', id)
+            .single();
+        
+        if (eventError || !event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // If event is free, user doesn't need to pay
+        if (!event.price_cents || event.price_cents === 0) {
+            return res.json({
+                success: true,
+                hasPaid: true,
+                requiresPayment: false
+            });
+        }
+        
+        // Check if user has paid by checking RSVP
+        const { data: rsvp, error: rsvpError } = await supabase
+            .from('event_rsvps')
+            .select('paid, paid_at')
+            .eq('event_id', id)
+            .eq('user_id', user_id)
+            .single();
+        
+        if (rsvpError && rsvpError.code !== 'PGRST116') {
+            return res.status(400).json({
+                success: false,
+                message: 'Failed to check payment status',
+                error: rsvpError.message
+            });
+        }
+        
+        return res.json({
+            success: true,
+            hasPaid: !!(rsvp && rsvp.paid),
+            requiresPayment: true
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while checking payment status',
             error: err.message
         });
     }
